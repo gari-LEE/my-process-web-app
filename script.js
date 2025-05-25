@@ -1,191 +1,29 @@
 import React, { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react';
 import { Search, Filter, Star, Printer, ChevronRight, ChevronDown, Calendar, Clock, User, HardDrive, FileText, Info, Home, ListFilter, Bookmark, Users, LayoutDashboard, CalendarDays, CalendarClock, CalendarCheck, Edit, X, PlusCircle, Link, BellRing, Trash2 } from 'lucide-react'; // 아이콘 라이브러리
 
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBdDXOEreJzytGMr8anZ9mg7I_kYrnx7gk",
+  authDomain: "my-process-app.firebaseapp.com",
+  projectId: "my-process-app",
+  storageBucket: "my-process-app.firebasestorage.app",
+  messagingSenderId: "1044912986098",
+  appId: "1:1044912986098:web:8f3d4d14cd7a2564fefd6b"
+};
+
+// Initialize Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+} else {
+  firebase.app(); // if already initialized, use that one
+}
+const db = firebase.firestore();
+
 // ManualContext 생성
 const ManualContext = createContext();
 
-// Mock Data (실제 데이터는 백엔드 또는 Firestore에서 가져올 수 있습니다.)
-const mockTasks = [
-  {
-    id: 'task-1',
-    name: 'QA 데이터 분석 및 보고',
-    category: '상담품질',
-    assignee: '권미 프로',
-    processSteps: [
-      '주간 QA 데이터 취합',
-      '데이터 분석 및 개선점 도출',
-      '분석 결과 보고서 작성',
-      '관련 팀에 공유 및 피드백 반영'
-    ],
-    cycle: '주간 1회',
-    deliverables: ['주간 QA 분석 보고서', '개선 액션 플랜'],
-    fileLink: '#',
-    fileLocation: '공유 드라이브/QA/2024',
-    notes: '매주 월요일 오전까지 완료',
-    isFavorite: false,
-  },
-  {
-    id: 'task-2',
-    name: '해피존(주) 고객 VOC 처리',
-    category: '고객관리',
-    assignee: '권미 프로',
-    processSteps: [
-      '해피존 접수된 고객 VOC 확인',
-      '관련 부서에 내용 전달 및 회신 요청',
-      '고객에게 처리 결과 안내',
-      'VOC 데이터 기록 및 관리'
-    ],
-    cycle: '일일',
-    deliverables: ['VOC 처리 완료 보고', '고객 회신 내역'],
-    fileLink: '#',
-    fileLocation: 'CRM 시스템',
-    notes: '긴급 VOC는 즉시 처리',
-    isFavorite: false,
-  },
-  {
-    id: 'task-3',
-    name: '콜시스템 일일 점검',
-    category: '콜시스템',
-    assignee: '이정훈 프로',
-    processSteps: [
-      '콜시스템 로그인 및 상태 확인',
-      '통화 품질 및 네트워크 안정성 점검',
-      '오류 발생 시 IT팀에 보고 및 조치 요청',
-      '점검 결과 기록'
-    ],
-    cycle: '일일',
-    deliverables: ['일일 콜시스템 점검 보고서'],
-    fileLink: '#',
-    fileLocation: '내부 시스템/콜시스템 로그',
-    notes: '매일 오전 9시 이전 완료',
-    isFavorite: false,
-  },
-  {
-    id: 'task-4',
-    name: '고객응대 매뉴얼 업데이트',
-    category: '콜시스템',
-    assignee: '이정훈 프로',
-    processSteps: [
-      '최신 고객 피드백 및 정책 변경 사항 검토',
-      '매뉴얼 내용 수정 및 보완',
-      '관련 팀원들에게 변경 사항 공지',
-      '업데이트된 매뉴얼 배포'
-    ],
-    cycle: '월간 1회',
-    deliverables: ['업데이트된 고객응대 매뉴얼'],
-    fileLink: '#',
-    fileLocation: '공유 드라이브/매뉴얼/고객응대',
-    notes: '매월 마지막 주 금요일 업데이트',
-    isFavorite: false,
-  },
-  {
-    id: 'task-5',
-    name: '진료일정 확인 및 조정',
-    category: '진료지원',
-    assignee: '김유미 프로',
-    processSteps: [
-      '주간 진료일정표 확인',
-      '의료진 휴가 및 변경 사항 반영',
-      '예약 고객에게 변경 사항 안내',
-      '최종 일정표 확정 및 공유'
-    ],
-    cycle: '주간 2회',
-    deliverables: ['주간 진료일정표'],
-    fileLink: '#',
-    fileLocation: '내부 시스템/진료일정',
-    notes: '매주 목요일 오후까지 완료',
-    isFavorite: false,
-  },
-  {
-    id: 'task-6',
-    name: '고객 문자발송 (안내/홍보)',
-    category: '진료지원',
-    assignee: '김유미 프로',
-    processSteps: [
-      '발송 대상 고객 리스트 확인',
-      '문자 내용 작성 및 승인 요청',
-      '문자 발송 시스템을 통해 발송',
-      '발송 결과 모니터링'
-    ],
-    cycle: '발생시',
-    deliverables: ['발송 완료 보고'],
-    fileLink: '#',
-    fileLocation: '문자 발송 시스템',
-    notes: '긴급 공지는 즉시 발송',
-    isFavorite: false,
-  },
-  {
-    id: 'task-7',
-    name: '해피존(부) 고객 만족도 조사',
-    category: '고객관리',
-    assignee: '정현주 프로',
-    processSteps: [
-      '고객 만족도 조사 설문지 준비',
-      '설문 대상 고객 선정 및 발송',
-      '설문 결과 취합 및 분석',
-      '분석 보고서 작성 및 공유'
-    ],
-    cycle: '월간 1회',
-    deliverables: ['월간 고객 만족도 조사 보고서'],
-    fileLink: '#',
-    fileLocation: '공유 드라이브/고객만족도/2024',
-    notes: '매월 첫째 주에 진행',
-    isFavorite: false,
-  },
-  {
-    id: 'task-8',
-    name: '팀 운영 지원 및 비품 관리',
-    category: '팀운영',
-    assignee: '정현주 프로',
-    processSteps: [
-      '팀 비품 재고 확인 및 부족분 신청',
-      '회의실 예약 및 회의 준비 지원',
-      '팀원 요청 사항 처리',
-      '사무 환경 정리 및 유지'
-    ],
-    cycle: '일일',
-    deliverables: ['비품 재고 현황', '회의록'],
-    fileLink: '#',
-    fileLocation: '팀 공유 폴더',
-    notes: '필요시 수시로 처리',
-    isFavorite: false,
-  },
-  {
-    id: 'task-9',
-    name: '고객감동위원회 회의 준비',
-    category: '고객관리',
-    assignee: '권미 프로',
-    processSteps: [
-      '회의 안건 및 자료 준비',
-      '회의록 작성',
-      '회의 결과 공유 및 후속 조치 팔로우업'
-    ],
-    cycle: '월간 1회',
-    deliverables: ['회의록', '액션 아이템 리스트'],
-    fileLink: '#',
-    fileLocation: '공유 드라이브/고객감동위원회',
-    notes: '매월 셋째 주 진행',
-    isFavorite: false,
-  },
-  {
-    id: 'task-10',
-    name: '주간 업무 보고서 작성',
-    category: '팀운영',
-    assignee: '정현주 프로',
-    processSteps: [
-      '팀원별 주간 업무 내용 취합',
-      '주요 성과 및 이슈 정리',
-      '주간 보고서 양식에 맞춰 작성',
-      '팀장님께 보고'
-    ],
-    cycle: '주간 1회',
-    deliverables: ['주간 업무 보고서'],
-    fileLink: '#',
-    fileLocation: '팀 공유 폴더/보고서',
-    notes: '매주 금요일 오후까지 완료',
-    isFavorite: false,
-  },
-];
+// Mock Data - This will be replaced by Firestore data
+// const mockTasks = [...]; // Removed
 
 const teamMembers = [
   { name: '권미 프로', roles: 'QA, 해피존(주), 고객감동위원회' },
@@ -206,100 +44,201 @@ const baseTaskCycles = [
 
 // Context Provider
 const ManualProvider = ({ children }) => {
-  const [tasks, setTasks] = useState(mockTasks);
+  const [tasks, setTasks] = useState([]); // Initial state is an empty array
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCycle, setFilterCycle] = useState(''); // Stores base cycle type (e.g., '주간')
+  const [filterCycle, setFilterCycle] = useState('');
   const [filterAssignee, setFilterAssignee] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [showFavorites, setShowFavorites] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // New loading state for skeleton UI
+  const [isLoading, setIsLoading] = useState(true);
 
   // Dashboard specific states
-  const [teamOverview, setTeamOverview] = useState({
-    title: '상담지원팀 개요',
-    content: '상담지원팀은 고객 소통 최전선에서 고객 만족을 위한 다양한 업무를 수행합니다. 본 매뉴얼은 팀원들이 업무를 효율적으로 수행하고, 필요한 정보를 신속하게 찾을 수 있도록 돕습니다.'
-  });
-  const [announcements, setAnnouncements] = useState([
-    { id: 'ann-1', title: '월간 업무 보고서 마감 안내', content: '이번 달 월간 업무 보고서 제출 마감일은 25일입니다. 기한 내 제출 바랍니다.', date: '2025-05-20' },
-    { id: 'ann-2', title: '신규 콜시스템 교육 일정', content: '다음 주 수요일 오후 2시, 신규 콜시스템 교육이 진행됩니다. 참석 바랍니다.', date: '2025-05-18' },
-    { id: 'ann-3', title: '팀 워크숍 개최', content: '다음 달 팀 워크숍이 예정되어 있습니다. 자세한 내용은 추후 공지 예정입니다.', date: '2025-05-15' },
-    { id: 'ann-4', title: '사내 봉사활동 참여 안내', content: '이번 주말 사내 봉사활동에 많은 참여 부탁드립니다. 상세 내용은 게시판 확인.', date: '2025-05-10' },
-  ]);
-  const [quickLinks, setQuickLinks] = useState([
-    { id: 'link-1', name: '회사 인트라넷', url: 'https://www.google.com', description: '내부 시스템 접속' },
-    { id: 'link-2', name: '고객 VOC 시스템', url: 'https://www.google.com', description: '고객 불만 접수 및 처리' },
-    { id: 'link-3', name: '주간 회의록', url: 'https://www.google.com', description: '팀 주간 회의록 확인' },
-  ]);
+  const [teamOverview, setTeamOverview] = useState(null); // Initialize as null
+  const [announcements, setAnnouncements] = useState([]); // Initial state is an empty array
+  const [quickLinks, setQuickLinks] = useState([]); // Initial state is an empty array
 
-
+  // Fetch Tasks from Firestore
   useEffect(() => {
-    // Simulate data fetching
-    const timer = setTimeout(() => {
+    setIsLoading(true);
+    const unsubscribe = db.collection('tasks').orderBy('name') // Example: order by name
+      .onSnapshot(snapshot => {
+        const fetchedTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setTasks(fetchedTasks);
+        setIsLoading(false);
+      }, error => {
+        console.error("Error fetching tasks: ", error);
+        setIsLoading(false);
+      });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch Announcements from Firestore
+  useEffect(() => {
+    setIsLoading(true);
+    const unsubscribe = db.collection('announcements').orderBy('date', 'desc') // Order by date descending
+      .onSnapshot(snapshot => {
+        const fetchedAnnouncements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setAnnouncements(fetchedAnnouncements);
+        // Set loading to false only after all initial data is fetched if necessary
+        // For simplicity, setting it here after announcements are fetched
+        // Consider a more robust loading state management for multiple async operations
+        setIsLoading(false); 
+      }, error => {
+        console.error("Error fetching announcements: ", error);
+        setIsLoading(false);
+      });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch Quick Links from Firestore
+  useEffect(() => {
+    setIsLoading(true);
+    const unsubscribe = db.collection('quickLinks').orderBy('name') // Example: order by name
+      .onSnapshot(snapshot => {
+        const fetchedQuickLinks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setQuickLinks(fetchedQuickLinks);
+        setIsLoading(false);
+      }, error => {
+        console.error("Error fetching quick links: ", error);
+        setIsLoading(false);
+      });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch/Initialize Team Overview from Firestore
+  useEffect(() => {
+    setIsLoading(true);
+    const docRef = db.collection('dashboardContent').doc('teamOverview');
+    const unsubscribe = docRef.onSnapshot(async (doc) => {
+      if (doc.exists) {
+        setTeamOverview({ id: doc.id, ...doc.data() });
+      } else {
+        // Document doesn't exist, create a default one
+        const defaultOverview = {
+          title: '상담지원팀 개요',
+          content: '상담지원팀은 고객 소통 최전선에서 고객 만족을 위한 다양한 업무를 수행합니다. 본 매뉴얼은 팀원들이 업무를 효율적으로 수행하고, 필요한 정보를 신속하게 찾을 수 있도록 돕습니다.'
+        };
+        try {
+          await docRef.set(defaultOverview);
+          setTeamOverview({ id: 'teamOverview', ...defaultOverview }); // Set with a placeholder ID or fetch again
+          console.log("Default team overview created.");
+        } catch (error) {
+          console.error("Error creating default team overview: ", error);
+        }
+      }
       setIsLoading(false);
-    }, 800); // Simulate 0.8 second loading time for a snappier feel
-    return () => clearTimeout(timer);
+    }, error => {
+      console.error("Error fetching team overview: ", error);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  // 즐겨찾기 토글 함수
-  const toggleFavorite = useCallback((taskId) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === taskId ? { ...task, isFavorite: !task.isFavorite } : task
-      )
-    );
+  // 즐겨찾기 토글 함수 (Firestore)
+  const toggleFavorite = useCallback(async (taskId) => {
+    const taskRef = db.collection('tasks').doc(taskId);
+    try {
+      const taskDoc = await taskRef.get();
+      if (taskDoc.exists) {
+        await taskRef.update({ isFavorite: !taskDoc.data().isFavorite });
+      }
+    } catch (error) {
+      console.error("Error toggling favorite: ", error);
+    }
   }, []);
 
-  // 업무 수정 함수
-  const updateTask = useCallback((updatedTask) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === updatedTask.id ? updatedTask : task
-      )
-    );
+  // 업무 수정 함수 (Firestore)
+  const updateTask = useCallback(async (updatedTask) => {
+    const { id, ...taskData } = updatedTask;
+    try {
+      await db.collection('tasks').doc(id).update(taskData);
+    } catch (error) {
+      console.error("Error updating task: ", error);
+    }
   }, []);
 
-  // 새 업무 추가 함수
-  const addTask = useCallback((newTaskData) => {
-    const newId = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Unique ID generation
-    setTasks(prevTasks => [...prevTasks, { ...newTaskData, id: newId, isFavorite: false }]);
+  // 새 업무 추가 함수 (Firestore)
+  const addTask = useCallback(async (newTaskData) => {
+    try {
+      // Firestore will auto-generate an ID if you don't specify one
+      await db.collection('tasks').add({ ...newTaskData, isFavorite: false });
+    } catch (error) {
+      console.error("Error adding task: ", error);
+    }
   }, []);
 
-  // Dashboard specific update functions
-  const updateTeamOverview = useCallback((newOverview) => { // 변경: newContent에서 newOverview로 명칭 변경 (객체 전체를 받음)
-    setTeamOverview(newOverview);
+  // Dashboard specific update functions (Firestore)
+  const updateTeamOverview = useCallback(async (newOverview) => {
+    // Assuming newOverview has an id if it was fetched, otherwise it's an update to the single doc
+    const docRef = db.collection('dashboardContent').doc('teamOverview');
+    try {
+        // Remove id from the object to be saved if it exists to avoid saving it in the document fields
+        const { id, ...overviewData } = newOverview;
+        await docRef.set(overviewData, { merge: true }); // Use set with merge to create or update
+    } catch (error) {
+        console.error("Error updating team overview: ", error);
+    }
   }, []);
 
-  const addAnnouncement = useCallback((newAnn) => {
-    setAnnouncements(prev => [...prev, { ...newAnn, id: `ann-${Date.now()}` }]);
-  }, []);
-  const updateAnnouncement = useCallback((updatedAnn) => {
-    setAnnouncements(prev => prev.map(ann => ann.id === updatedAnn.id ? updatedAnn : ann));
-  }, []);
-  const deleteAnnouncement = useCallback((id) => {
-    setAnnouncements(prev => prev.filter(ann => ann.id !== id));
+  const addAnnouncement = useCallback(async (newAnn) => {
+    try {
+      await db.collection('announcements').add(newAnn);
+    } catch (error) {
+      console.error("Error adding announcement: ", error);
+    }
   }, []);
 
-  const addQuickLink = useCallback((newLink) => {
-    setQuickLinks(prev => [...prev, { ...newLink, id: `link-${Date.now()}` }]);
-  }, []);
-  const updateQuickLink = useCallback((updatedLink) => {
-    setQuickLinks(prev => prev.map(link => link.id === updatedLink.id ? updatedLink : link));
-  }, []);
-  const deleteQuickLink = useCallback((id) => {
-    setQuickLinks(prev => prev.filter(link => link.id !== id));
+  const updateAnnouncement = useCallback(async (updatedAnn) => {
+    const { id, ...annData } = updatedAnn;
+    try {
+      await db.collection('announcements').doc(id).update(annData);
+    } catch (error) {
+      console.error("Error updating announcement: ", error);
+    }
   }, []);
 
+  const deleteAnnouncement = useCallback(async (id) => {
+    try {
+      await db.collection('announcements').doc(id).delete();
+    } catch (error) {
+      console.error("Error deleting announcement: ", error);
+    }
+  }, []);
+
+  const addQuickLink = useCallback(async (newLink) => {
+    try {
+      await db.collection('quickLinks').add(newLink);
+    } catch (error) {
+      console.error("Error adding quick link: ", error);
+    }
+  }, []);
+
+  const updateQuickLink = useCallback(async (updatedLink) => {
+    const { id, ...linkData } = updatedLink;
+    try {
+      await db.collection('quickLinks').doc(id).update(linkData);
+    } catch (error) {
+      console.error("Error updating quick link: ", error);
+    }
+  }, []);
+
+  const deleteQuickLink = useCallback(async (id) => {
+    try {
+      await db.collection('quickLinks').doc(id).delete();
+    } catch (error) {
+      console.error("Error deleting quick link: ", error);
+    }
+  }, []);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
       const matchesSearch = searchTerm === '' ||
-        task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.assignee.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.processSteps.some(step => step.toLowerCase().includes(searchTerm.toLowerCase()));
+        (task.name && task.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (task.assignee && task.assignee.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (task.category && task.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (task.processSteps && task.processSteps.some(step => step.toLowerCase().includes(searchTerm.toLowerCase())));
 
-      // Filter by base cycle type
-      const taskBaseCycle = task.cycle.split(' ')[0]; // '주간 1회' -> '주간'
+      const taskBaseCycle = task.cycle ? task.cycle.split(' ')[0] : '';
       const matchesCycle = filterCycle === '' || taskBaseCycle === filterCycle;
 
       const matchesAssignee = filterAssignee === '' || task.assignee === filterAssignee;
@@ -311,7 +250,7 @@ const ManualProvider = ({ children }) => {
   }, [tasks, searchTerm, filterCycle, filterAssignee, filterCategory, showFavorites]);
 
   const contextValue = useMemo(() => ({
-    tasks,
+    tasks, // This will be updated by Firestore snapshots
     filteredTasks,
     searchTerm,
     setSearchTerm,
@@ -325,12 +264,11 @@ const ManualProvider = ({ children }) => {
     setShowFavorites,
     toggleFavorite,
     updateTask,
-    addTask, // Add addTask to context
+    addTask,
     teamMembers,
-    taskCategories: actualTaskCategories, // 실제 업무 카테고리 목록 사용
-    taskCycles: baseTaskCycles, // Use baseTaskCycles for filter options
-    isLoading, // Add isLoading to context
-    // Dashboard specific context values
+    taskCategories: actualTaskCategories,
+    taskCycles: baseTaskCycles,
+    isLoading, 
     teamOverview, updateTeamOverview,
     announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement,
     quickLinks, addQuickLink, updateQuickLink, deleteQuickLink,
@@ -339,7 +277,7 @@ const ManualProvider = ({ children }) => {
     toggleFavorite, updateTask, addTask, isLoading,
     teamOverview, updateTeamOverview,
     announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement,
-    quickLinks, addQuickLink, updateQuickLink, deleteQuickLink,
+    quickLinks, addQuickLink, updateQuickLink, deleteQuickLink, teamMembers // Added teamMembers here as it's used in context but wasn't in deps
   ]);
 
   return (
@@ -354,11 +292,10 @@ const Header = ({ onSearchChange, onNavigate, currentPage, onOpenCreateTask }) =
   const [input, setInput] = useState('');
   const { searchTerm, setSearchTerm } = useContext(ManualContext);
 
-  // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
       setSearchTerm(input);
-    }, 300); // 300ms debounce time
+    }, 300);
 
     return () => {
       clearTimeout(handler);
@@ -412,7 +349,7 @@ const Header = ({ onSearchChange, onNavigate, currentPage, onOpenCreateTask }) =
 };
 
 // Sidebar Component
-const Sidebar = ({ onNavigate, currentPage }) => { // currentPage prop 추가
+const Sidebar = ({ onNavigate, currentPage }) => { 
   const { teamMembers, taskCategories, taskCycles, setFilterAssignee, setFilterCategory, setFilterCycle, setShowFavorites, showFavorites, filterAssignee, filterCategory, filterCycle } = useContext(ManualContext);
 
   const handleClearFilters = () => {
@@ -422,7 +359,6 @@ const Sidebar = ({ onNavigate, currentPage }) => { // currentPage prop 추가
     setShowFavorites(false);
   };
 
-  // 대시보드에서는 사이드바를 렌더링하지 않음
   if (currentPage === 'dashboard') {
     return null;
   }
@@ -441,7 +377,6 @@ const Sidebar = ({ onNavigate, currentPage }) => { // currentPage prop 추가
           </button>
         </div>
 
-        {/* 즐겨찾기 토글 */}
         <div className="border-b border-gray-200 pb-4">
           <label className="flex items-center justify-between cursor-pointer py-2">
             <span className="text-gray-700 font-medium flex items-center"><Bookmark className="w-4 h-4 mr-2" /> 즐겨찾기</span>
@@ -455,7 +390,6 @@ const Sidebar = ({ onNavigate, currentPage }) => { // currentPage prop 추가
           </label>
         </div>
 
-        {/* 담당자별 필터 */}
         <div className="border-b border-gray-200 pb-4">
           <h4 className="text-gray-700 font-medium mb-2 flex items-center"><Users className="w-4 h-4 mr-2" /> 담당자별</h4>
           <div className="space-y-1">
@@ -486,7 +420,6 @@ const Sidebar = ({ onNavigate, currentPage }) => { // currentPage prop 추가
           </div>
         </div>
 
-        {/* 업무 카테고리 필터 */}
         <div className="border-b border-gray-200 pb-4">
           <h4 className="text-gray-700 font-medium mb-2 flex items-center"><LayoutDashboard className="w-4 h-4 mr-2" /> 업무 카테고리</h4>
           <div className="space-y-1">
@@ -501,7 +434,7 @@ const Sidebar = ({ onNavigate, currentPage }) => { // currentPage prop 추가
               />
               <span className="ml-2">전체</span>
             </label>
-            {actualTaskCategories.map(category => ( // 실제 업무 카테고리 목록 사용
+            {actualTaskCategories.map(category => (
               <label key={category} className={`flex items-center text-sm cursor-pointer p-1 rounded-md transition-colors duration-200 ${filterCategory === category ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'}`}>
                 <input
                   type="radio"
@@ -517,7 +450,6 @@ const Sidebar = ({ onNavigate, currentPage }) => { // currentPage prop 추가
           </div>
         </div>
 
-        {/* 수행 주기 필터 */}
         <div>
           <h4 className="text-gray-700 font-medium mb-2 flex items-center"><CalendarDays className="w-4 h-4 mr-2" /> 수행 주기</h4>
           <div className="space-y-1">
@@ -567,14 +499,14 @@ const TaskCard = ({ task, onSelectTask }) => {
   const { toggleFavorite } = useContext(ManualContext);
 
   const getCycleIcon = (cycle) => {
-    const baseCycle = cycle.split(' ')[0]; // Extract base cycle for icon
+    const baseCycle = cycle ? cycle.split(' ')[0] : '';
     switch (baseCycle) {
       case '일일': return <CalendarClock className="w-4 h-4 text-orange-400" />;
       case '주간': return <CalendarDays className="w-4 h-4 text-orange-400" />;
       case '월간': return <Calendar className="w-4 h-4 text-orange-400" />;
       case '년간': return <CalendarCheck className="w-4 h-4 text-orange-400" />;
       case '발생시': return <Clock className="w-4 h-4 text-orange-400" />;
-      default: return null;
+      default: return <Clock className="w-4 h-4 text-gray-400" />; // Default icon if cycle is undefined
     }
   };
 
@@ -595,18 +527,18 @@ const TaskCard = ({ task, onSelectTask }) => {
       >
         <Star className={`w-6 h-6 ${task.isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
       </button>
-      <h3 className="text-xl font-semibold text-gray-800 mb-2 truncate">{task.name}</h3>
+      <h3 className="text-xl font-semibold text-gray-800 mb-2 truncate">{task.name || '제목 없음'}</h3>
       <div className="flex items-center text-gray-600 text-sm mb-1 truncate">
         <User className="w-4 h-4 mr-2 text-indigo-500" />
-        <span>{task.assignee}</span>
+        <span>{task.assignee || '담당자 미지정'}</span>
       </div>
       <div className="flex items-center text-gray-600 text-sm mb-1 truncate">
         <LayoutDashboard className="w-4 h-4 mr-2 text-indigo-500" />
-        <span>{task.category}</span>
+        <span>{task.category || '카테고리 미지정'}</span>
       </div>
       <div className="flex items-center text-gray-600 text-sm">
         {getCycleIcon(task.cycle)}
-        <span className="ml-2">{task.cycle}</span>
+        <span className="ml-2">{task.cycle || '주기 미지정'}</span>
       </div>
     </div>
   );
@@ -630,7 +562,7 @@ const TaskList = ({ onSelectTask }) => {
         <p className="text-lg">
           {searchTerm || filterAssignee || filterCategory || filterCycle || showFavorites
             ? '검색 또는 필터링 조건에 맞는 업무가 없습니다.'
-            : '등록된 업무가 없습니다.'
+            : '등록된 업무가 없습니다. 새 업무를 추가해보세요.'
           }
         </p>
       </div>
@@ -648,7 +580,13 @@ const TaskList = ({ onSelectTask }) => {
 
 // Edit Team Overview Modal
 const EditTeamOverviewModal = ({ initialContent, onClose, onSave }) => {
-  const [editedOverview, setEditedOverview] = useState(initialContent); // title과 content를 모두 포함하도록 수정
+  const [editedOverview, setEditedOverview] = useState(initialContent || { title: '', content: '' });
+
+  useEffect(() => {
+    if (initialContent) {
+        setEditedOverview(initialContent);
+    }
+  }, [initialContent]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -657,7 +595,8 @@ const EditTeamOverviewModal = ({ initialContent, onClose, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(editedOverview); // editedOverview 객체 전체를 전달
+    onSave(editedOverview);
+    onClose();
   };
 
   return (
@@ -678,7 +617,7 @@ const EditTeamOverviewModal = ({ initialContent, onClose, onSave }) => {
               name="title"
               value={editedOverview.title}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400"
               required
             />
           </div>
@@ -690,7 +629,7 @@ const EditTeamOverviewModal = ({ initialContent, onClose, onSave }) => {
               value={editedOverview.content}
               onChange={handleChange}
               rows="5"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400 transition-all duration-200"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400"
               required
             ></textarea>
           </div>
@@ -720,6 +659,14 @@ const AnnouncementFormModal = ({ initialAnnouncement, onClose }) => {
   const { addAnnouncement, updateAnnouncement, deleteAnnouncement } = useContext(ManualContext);
   const [announcement, setAnnouncement] = useState(initialAnnouncement || { title: '', content: '', date: new Date().toISOString().slice(0, 10) });
 
+  useEffect(() => {
+    if (initialAnnouncement) {
+        setAnnouncement(initialAnnouncement);
+    } else {
+        setAnnouncement({ title: '', content: '', date: new Date().toISOString().slice(0, 10) });
+    }
+  }, [initialAnnouncement]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAnnouncement(prev => ({ ...prev, [name]: value }));
@@ -736,13 +683,13 @@ const AnnouncementFormModal = ({ initialAnnouncement, onClose }) => {
   };
 
   const handleDelete = () => {
-    if (announcement.id && window.confirm('정말로 이 공지를 삭제하시겠습니까?')) { // In a real app, use a custom modal for confirmation
+    if (announcement.id && window.confirm('정말로 이 공지를 삭제하시겠습니까?')) {
       deleteAnnouncement(announcement.id);
       onClose();
     }
   };
 
-  const modalTitle = initialAnnouncement ? '공지 수정' : '새 공지 작성';
+  const modalTitle = announcement.id ? '공지 수정' : '새 공지 작성';
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -825,6 +772,14 @@ const QuickLinkFormModal = ({ initialLink, onClose }) => {
   const { addQuickLink, updateQuickLink, deleteQuickLink } = useContext(ManualContext);
   const [link, setLink] = useState(initialLink || { name: '', url: '', description: '' });
 
+  useEffect(() => {
+    if (initialLink) {
+        setLink(initialLink);
+    } else {
+        setLink({ name: '', url: '', description: '' });
+    }
+  }, [initialLink]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setLink(prev => ({ ...prev, [name]: value }));
@@ -841,13 +796,13 @@ const QuickLinkFormModal = ({ initialLink, onClose }) => {
   };
 
   const handleDelete = () => {
-    if (link.id && window.confirm('정말로 이 링크를 삭제하시겠습니까?')) { // In a real app, use a custom modal for confirmation
+    if (link.id && window.confirm('정말로 이 링크를 삭제하시겠습니까?')) {
       deleteQuickLink(link.id);
       onClose();
     }
   };
 
-  const modalTitle = initialLink ? '빠른 링크 수정' : '새 빠른 링크 추가';
+  const modalTitle = link.id ? '빠른 링크 수정' : '새 빠른 링크 추가';
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -924,9 +879,9 @@ const QuickLinkFormModal = ({ initialLink, onClose }) => {
   );
 };
 
-// Announcements Page Component
+// AnnouncementsPage Component
 const AnnouncementsPage = ({ onBack }) => {
-  const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement, isLoading } = useContext(ManualContext);
+  const { announcements, deleteAnnouncement, isLoading } = useContext(ManualContext);
   const [showAnnouncementFormModal, setShowAnnouncementFormModal] = useState(false);
   const [announcementToEdit, setAnnouncementToEdit] = useState(null);
 
@@ -943,7 +898,13 @@ const AnnouncementsPage = ({ onBack }) => {
     setAnnouncementToEdit(null);
   };
 
-  if (isLoading) {
+  const handleDeleteAnnouncement = async (id) => {
+      if (window.confirm('정말로 이 공지를 삭제하시겠습니까?')) {
+          await deleteAnnouncement(id);
+      }
+  }
+
+  if (isLoading && announcements.length === 0) {
     return (
       <div className="p-6 bg-gray-50 min-h-screen rounded-lg animate-pulse">
         <div className="h-10 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -980,14 +941,16 @@ const AnnouncementsPage = ({ onBack }) => {
         </div>
       </div>
 
-      {announcements.length > 0 ? (
+      {isLoading && announcements.length === 0 ? (
+          <p className="text-gray-500 text-center text-lg mt-8">공지사항을 불러오는 중...</p>
+      ) : announcements.length > 0 ? (
         <ul className="space-y-4">
           {announcements.map(ann => (
             <li key={ann.id} className="flex justify-between items-start bg-white p-4 rounded-lg shadow-md border border-gray-200 transition-all duration-300 hover:shadow-lg animate-fade-in-up">
               <div>
-                <h3 className="font-semibold text-gray-800 text-lg truncate">{ann.title}</h3>
-                <p className="text-gray-700 text-sm">{ann.content}</p>
-                <span className="text-gray-500 text-xs mt-1 block">{ann.date}</span>
+                <h3 className="font-semibold text-gray-800 text-lg truncate">{ann.title || '제목 없음'}</h3>
+                <p className="text-gray-700 text-sm">{ann.content || '내용 없음'}</p>
+                <span className="text-gray-500 text-xs mt-1 block">{ann.date ? new Date(ann.date.seconds ? ann.date.seconds * 1000 : ann.date).toLocaleDateString() : '날짜 없음'}</span>
               </div>
               <div className="flex space-x-2 ml-4 flex-shrink-0">
                 <button
@@ -998,7 +961,7 @@ const AnnouncementsPage = ({ onBack }) => {
                   <Edit className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => deleteAnnouncement(ann.id)}
+                  onClick={() => handleDeleteAnnouncement(ann.id)}
                   className="p-2 rounded-full text-gray-400 hover:text-red-500 transition-colors duration-200"
                   title="공지 삭제"
                 >
@@ -1009,7 +972,7 @@ const AnnouncementsPage = ({ onBack }) => {
           ))}
         </ul>
       ) : (
-        <p className="text-gray-500 text-center text-lg mt-8">등록된 공지사항이 없습니다.</p>
+        <p className="text-gray-500 text-center text-lg mt-8">등록된 공지사항이 없습니다. 새 공지를 추가해보세요.</p>
       )}
 
       {showAnnouncementFormModal && (
@@ -1022,20 +985,520 @@ const AnnouncementsPage = ({ onBack }) => {
   );
 };
 
+// DashboardPage, TaskDetailPage, PrintPage, FilterChips components
+// These components will primarily consume data from the context.
+// No direct Firestore calls are made within them, but they might trigger context functions (e.g., editing a task from TaskDetailPage)
+
+const DashboardPage = ({ onSelectTask, onNavigate }) => {
+    const { 
+        teamOverview, updateTeamOverview, 
+        announcements, 
+        quickLinks, 
+        isLoading, 
+        tasks 
+    } = useContext(ManualContext);
+
+    const [showEditOverviewModal, setShowEditOverviewModal] = useState(false);
+    const [showAnnouncementFormModal, setShowAnnouncementFormModal] = useState(false);
+    const [announcementToEdit, setAnnouncementToEdit] = useState(null);
+
+    const recentTasks = useMemo(() => {
+        // Example: show 5 most recently modified or created tasks if timestamp available
+        // For now, just takes the first 5 tasks if no specific timestamp logic
+        return tasks.slice(0, 5);
+    }, [tasks]);
+
+    const upcomingSchedules = useMemo(() => {
+        // Filter tasks that have a cycle and are not '발생시' or '일일' for a simple upcoming view
+        // This is a placeholder. Real schedule logic would be more complex.
+        return tasks.filter(t => t.cycle && !['발생시', '일일'].includes(t.cycle.split(' ')[0])).slice(0, 3);
+    }, [tasks]);
+
+    if (isLoading && !teamOverview && announcements.length === 0 && quickLinks.length === 0) {
+        return (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-1 animate-pulse">
+                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md h-48"><div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div><div className="h-4 bg-gray-200 rounded w-full mb-2"></div><div className="h-4 bg-gray-200 rounded w-2/3"></div></div>
+                <div className="bg-white p-6 rounded-lg shadow-md h-48"><div className="h-6 bg-gray-200 rounded w-1/2 mb-3"></div><div className="h-4 bg-gray-200 rounded w-full mb-1"></div><div className="h-4 bg-gray-200 rounded w-full mb-1"></div></div>
+                <div className="lg:col-span-3 bg-white p-6 rounded-lg shadow-md h-64"><div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div><div className="h-4 bg-gray-200 rounded w-full mb-2"></div><div className="h-4 bg-gray-200 rounded w-full mb-2"></div><div className="h-4 bg-gray-200 rounded w-3/4"></div></div>
+            </div>
+        );
+    }
+
+    const handleOpenEditAnnouncement = (ann) => {
+        setAnnouncementToEdit(ann);
+        setShowAnnouncementFormModal(true);
+    };
+    const handleOpenCreateAnnouncement = () => {
+        setAnnouncementToEdit(null);
+        setShowAnnouncementFormModal(true);
+    };
+    const handleCloseAnnouncementForm = () => {
+        setShowAnnouncementFormModal(false);
+        setAnnouncementToEdit(null);
+    };
+
+    const { deleteAnnouncement } = useContext(ManualContext); // For direct delete from dashboard
+    const { deleteQuickLink } = useContext(ManualContext); // For direct delete from dashboard
+
+    const handleDeleteAnnouncement = async (id) => {
+        if (window.confirm('정말로 이 공지를 삭제하시겠습니까?')) {
+            await deleteAnnouncement(id);
+        }
+    };
+
+    return (
+        <div className="p-1 space-y-6 animate-fade-in">
+            {/* Team Overview Section */}
+            <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                        <Info className="w-6 h-6 mr-2 text-indigo-600" /> {teamOverview?.title || '팀 개요'}
+                    </h2>
+                    <button 
+                        onClick={() => setShowEditOverviewModal(true)} 
+                        className="p-2 rounded-full text-gray-400 hover:text-indigo-500 hover:bg-indigo-100 transition-colors duration-200"
+                        title="팀 개요 수정"
+                    >
+                        <Edit className="w-5 h-5" />
+                    </button>
+                </div>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{teamOverview?.content || '팀 개요 내용이 없습니다. 수정 버튼을 눌러 추가해주세요.'}</p>
+            </section>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Announcements Section */}
+                <section className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                            <BellRing className="w-5 h-5 mr-2 text-pink-500" /> 최근 공지
+                        </h2>
+                        <div className="flex items-center space-x-2">
+                            <button 
+                                onClick={handleOpenCreateAnnouncement}
+                                className="px-3 py-1 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors duration-200 text-xs font-medium shadow-sm flex items-center"
+                                title="새 공지 작성"
+                            >
+                                <PlusCircle className="w-4 h-4 mr-1" /> 새 공지
+                            </button>
+                            <button 
+                                onClick={() => onNavigate('announcements')}
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm font-medium"
+                                title="모든 공지 보기"
+                            >
+                                전체 보기 <ChevronRight className="w-3 h-3 ml-1" />
+                            </button>
+                        </div>
+                    </div>
+                    {isLoading && announcements.length === 0 ? (
+                        <p className="text-gray-500 text-sm">공지사항을 불러오는 중...</p>
+                    ) : announcements.length > 0 ? (
+                        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            {announcements.slice(0, 3).map(ann => (
+                                <li key={ann.id} className="p-3 bg-gray-50 rounded-md border border-gray-200 hover:border-gray-300 transition-colors duration-200">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-semibold text-gray-700 text-sm truncate">{ann.title || '제목 없음'}</h3>
+                                            <p className="text-gray-700 text-sm">{ann.content || '내용 없음'}</p>
+                                            <span className="text-gray-500 text-xs mt-1 block">{ann.date ? new Date(ann.date.seconds ? ann.date.seconds * 1000 : ann.date).toLocaleDateString() : '날짜 없음'}</span>
+                                        </div>
+                                        <div className="flex space-x-2 ml-4 flex-shrink-0">
+                                            <button onClick={() => handleOpenEditAnnouncement(ann)} className="p-2 rounded-full text-gray-400 hover:text-indigo-500" title="수정"><Edit className="w-4 h-5" /></button>
+                                            <button onClick={() => handleDeleteAnnouncement(ann.id)} className="p-2 rounded-full text-gray-400 hover:text-red-500" title="삭제"><Trash2 className="w-4 h-5" /></button>
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-gray-500 text-sm">등록된 공지사항이 없습니다.</p>
+                    )}
+                </section>
+
+                {/* Quick Links Section */}
+                <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                            <Link className="w-5 h-5 mr-2 text-green-500" /> 빠른 링크
+                        </h2>
+                        <button 
+                            onClick={handleOpenCreateAnnouncement}
+                            className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-200 text-xs font-medium shadow-sm flex items-center"
+                            title="새 빠른 링크 추가"
+                        >
+                           <PlusCircle className="w-4 h-4 mr-1" /> 새 빠른 링크 추가
+                        </button>
+                    </div>
+                     {isLoading && quickLinks.length === 0 ? (
+                        <p className="text-gray-500 text-sm">링크를 불러오는 중...</p>
+                    ) : quickLinks.length > 0 ? (
+                        <ul className="space-y-2.5 max-h-60 overflow-y-auto pr-2">
+                            {quickLinks.map(link => (
+                                <li key={link.id} className="p-2.5 bg-gray-50 rounded-md border border-gray-200 hover:border-gray-300 transition-colors duration-200">
+                                    <div className="flex justify-between items-center">
+                                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-indigo-600 hover:underline truncate" title={link.description || link.name}>
+                                            {link.name || '이름 없음'}
+                                        </a>
+                                        <div className="flex space-x-1 flex-shrink-0 ml-2">
+                                            <button onClick={() => handleOpenEditAnnouncement(link)} className="p-1 rounded-full text-gray-400 hover:text-indigo-500" title="수정"><Edit className="w-4 h-4" /></button>
+                                            <button onClick={() => handleDeleteQuickLink(link.id)} className="p-1 rounded-full text-gray-400 hover:text-red-500" title="삭제"><Trash2 className="w-4 h-4"/></button>
+                                        </div>
+                                    </div>
+                                    {link.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{link.description}</p>}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-gray-500 text-sm">등록된 빠른 링크가 없습니다.</p>
+                    )}
+                </section>
+            </div>
+
+            {/* Modals for Dashboard items */}
+            {showEditOverviewModal && teamOverview && (
+                <EditTeamOverviewModal 
+                    initialContent={teamOverview} 
+                    onClose={() => setShowEditOverviewModal(false)} 
+                    onSave={updateTeamOverview} // updateTeamOverview from context
+                />
+            )}
+            {showAnnouncementFormModal && (
+                <AnnouncementFormModal 
+                    initialAnnouncement={announcementToEdit} 
+                    onClose={handleCloseAnnouncementForm} 
+                    // add/update/delete are handled by context functions within the modal
+                />
+            )}
+        </div>
+    );
+};
+
+const TaskDetailPage = ({ task, onBack, onPrint, onOpenEditTask }) => {
+    const { isLoading } = useContext(ManualContext); // Access isLoading if needed for specific loading states within detail page
+
+    if (isLoading && !task) { // Show loading if task details are not yet available
+        return <div className="p-6 bg-white rounded-lg shadow-md animate-pulse"><div className="h-8 bg-gray-200 rounded w-1/2 mb-6"></div><div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div><div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div><div className="mt-6 h-20 bg-gray-200 rounded w-full"></div></div>;
+    }
+
+    if (!task) {
+        return <div className="p-6 text-center text-gray-500">업무 정보를 불러올 수 없습니다. 목록으로 돌아가 다시 시도해주세요.</div>;
+    }
+
+    const { name, category, assignee, processSteps, cycle, deliverables, fileLink, fileLocation, notes, isFavorite } = task;
+
+    return (
+        <div className="p-6 bg-white rounded-lg shadow-xl border border-gray-200 animate-fade-in print-page">
+            <div className="flex justify-between items-center mb-6 no-print">
+                <button 
+                    onClick={onBack} 
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm font-medium"
+                    title="돌아가기"
+                >
+                    &larr; 돌아가기
+                </button>
+                <div className="flex space-x-3">
+                    <button 
+                        onClick={() => onOpenEditTask(task)} 
+                        className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors duration-200 text-sm font-medium"
+                        title="업무 수정"
+                    >
+                        <Edit className="w-4 h-4 mr-1" /> 수정
+                    </button>
+                    <button 
+                        onClick={() => onPrint(task)} 
+                        className="px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors duration-200 text-sm font-medium"
+                        title="업무 인쇄"
+                    >
+                        <Printer className="w-4 h-4 mr-1" /> 인쇄
+                    </button>
+                </div>
+            </div>
+
+            <h2 className="text-3xl font-bold text-gray-800 mb-2 print:text-2xl print:mb-4">{name || '제목 없음'}</h2>
+            {isFavorite && <span className="inline-block bg-yellow-100 text-yellow-700 text-xs font-semibold px-2 py-0.5 rounded-full mb-4 no-print"><Star className="w-3 h-3 inline-block mr-1 fill-current"/> 즐겨찾기</span>}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-6 print:grid-cols-2 print:gap-x-6 print:gap-y-3 print:mb-4">
+                <div className="flex items-center text-gray-700">
+                    <User className="w-5 h-5 mr-2.5 text-indigo-500 print:w-4 print:h-4 print:mr-2" />
+                    <div>
+                        <span className="text-xs text-gray-500 print:text-xs">담당자</span>
+                        <p className="font-medium print:text-sm">{assignee || '미지정'}</p>
+                    </div>
+                </div>
+                <div className="flex items-center text-gray-700">
+                    <LayoutDashboard className="w-5 h-5 mr-2.5 text-indigo-500 print:w-4 print:h-4 print:mr-2" />
+                    <div>
+                        <span className="text-xs text-gray-500 print:text-xs">카테고리</span>
+                        <p className="font-medium print:text-sm">{category || '미지정'}</p>
+                    </div>
+                </div>
+                <div className="flex items-center text-gray-700">
+                    <CalendarClock className="w-5 h-5 mr-2.5 text-indigo-500 print:w-4 print:h-4 print:mr-2" />
+                    <div>
+                        <span className="text-xs text-gray-500 print:text-xs">수행주기</span>
+                        <p className="font-medium print:text-sm">{cycle || '미지정'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mb-6 print:mb-4">
+                <h3 className="text-xl font-semibold text-gray-700 mb-2 print:text-lg print:mb-1.5">업무 절차</h3>
+                {processSteps && processSteps.length > 0 ? (
+                    <ul className="list-decimal list-inside space-y-1.5 pl-1 text-gray-700 print:space-y-1 print:text-sm">
+                        {processSteps.map((step, index) => <li key={index}>{step}</li>)}
+                    </ul>
+                ) : (
+                    <p className="text-gray-500 text-sm">등록된 업무 절차가 없습니다.</p>
+                )}
+            </div>
+
+            {notes && (
+                <div className="mb-6 print:mb-4">
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2 print:text-lg print:mb-1.5">참고 사항</h3>
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md whitespace-pre-wrap print:text-sm print:bg-transparent print:p-0">{notes}</p>
+                </div>
+            )}
+            <div className="print:mt-8 print:text-xs print:text-gray-500 print:text-center">
+                 인쇄일: {new Date().toLocaleDateString()}
+            </div>
+        </div>
+    );
+};
+
+const PrintPage = ({ task, onBack }) => {
+    useEffect(() => {
+        // Trigger print dialog once component mounts
+        // Delay slightly to ensure content is rendered
+        const timer = setTimeout(() => {
+            window.print();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // TaskDetailPage is reused for print layout, with print-specific styles handling the look
+    return (
+        <div className="print-page-container">
+             <button 
+                onClick={onBack} 
+                className="fixed top-4 left-4 px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 text-xs font-medium no-print z-50 shadow-lg"
+                title="돌아가기"
+            >
+                &larr; 돌아가기
+            </button>
+            <TaskDetailPage task={task} onBack={() => {}} onPrint={() => {}} onOpenEditTask={() => {}} /> 
+        </div>
+    );
+};
+
+const FilterChips = () => {
+    const { 
+        searchTerm, setSearchTerm,
+        filterCycle, setFilterCycle,
+        filterAssignee, setFilterAssignee,
+        filterCategory, setFilterCategory,
+        showFavorites, setShowFavorites
+    } = useContext(ManualContext);
+
+    const activeFilters = [];
+    if (searchTerm) activeFilters.push({ type: '검색어', value: searchTerm, clear: () => setSearchTerm('') });
+    if (filterCycle) activeFilters.push({ type: '수행주기', value: filterCycle, clear: () => setFilterCycle('') });
+    if (filterAssignee) activeFilters.push({ type: '담당자', value: filterAssignee, clear: () => setFilterAssignee('') });
+    if (filterCategory) activeFilters.push({ type: '카테고리', value: filterCategory, clear: () => setFilterCategory('') });
+    if (showFavorites) activeFilters.push({ type: '필터', value: '즐겨찾기만', clear: () => setShowFavorites(false) });
+
+    if (activeFilters.length === 0) return null;
+
+    return (
+        <div className="p-4 bg-gray-100 rounded-t-lg mb-0 -mx-4 -mt-4 sm:mx-0 sm:mt-0 sm:mb-4 sm:rounded-lg no-print">
+            <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-sm font-medium text-gray-700">활성 필터:</span>
+                {activeFilters.map(filter => (
+                    <div key={`${filter.type}-${filter.value}`} className="flex items-center bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                        <span>{filter.type}: {filter.value}</span>
+                        <button onClick={filter.clear} className="ml-1.5 text-gray-400 hover:text-indigo-500">
+                            <X className="w-3 h-3" />
+                        </button>
+                    </div>
+                ))}
+                <button
+                    onClick={() => {
+                        setSearchTerm('');
+                        setFilterCycle('');
+                        setFilterAssignee('');
+                        setFilterCategory('');
+                        setShowFavorites(false);
+                    }}
+                    className="text-xs text-gray-500 hover:text-indigo-600 hover:underline ml-2"
+                >
+                    전체 필터 해제
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// Task Form Modal (Create/Edit Task)
+// This modal will use the context functions (addTask, updateTask) which now interact with Firestore.
+const TaskFormModal = ({ task: initialTask, onClose }) => {
+    const { addTask, updateTask, teamMembers, taskCategories, taskCycles } = useContext(ManualContext);
+    const [task, setTask] = useState(initialTask || {
+        name: '',
+        category: taskCategories[0] || '',
+        assignee: teamMembers[0]?.name || '',
+        processSteps: [''],
+        cycle: taskCycles[0] || '',
+        deliverables: [''],
+        fileLink: '',
+        fileLocation: '',
+        notes: '',
+        isFavorite: false, // isFavorite is handled by toggleFavorite, not typically set in form
+    });
+
+    useEffect(() => {
+        if (initialTask) {
+            setTask({
+                ...initialTask,
+                processSteps: initialTask.processSteps?.length ? initialTask.processSteps : [''], // Ensure at least one step input
+                deliverables: initialTask.deliverables?.length ? initialTask.deliverables : [''], // Ensure at least one deliverable input
+            });
+        } else {
+            // Reset to default for new task
+            setTask({
+                name: '',
+                category: taskCategories[0] || '',
+                assignee: teamMembers[0]?.name || '',
+                processSteps: [''],
+                cycle: taskCycles[0] || '',
+                deliverables: [''],
+                fileLink: '',
+                fileLocation: '',
+                notes: '',
+                isFavorite: false,
+            });
+        }
+    }, [initialTask, teamMembers, taskCategories, taskCycles]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleListChange = (e, index, field) => {
+        const newList = [...task[field]];
+        newList[index] = e.target.value;
+        setTask(prev => ({ ...prev, [field]: newList }));
+    };
+
+    const addListItem = (field) => {
+        setTask(prev => ({ ...prev, [field]: [...prev[field], ''] }));
+    };
+
+    const removeListItem = (index, field) => {
+        if (task[field].length > 1) { // Prevent removing the last item
+            const newList = task[field].filter((_, i) => i !== index);
+            setTask(prev => ({ ...prev, [field]: newList }));
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const taskToSave = {
+            ...task,
+            processSteps: task.processSteps.filter(step => step.trim() !== ''),
+            deliverables: task.deliverables.filter(d => d.trim() !== ''),
+        };
+        if (task.id) {
+            await updateTask(taskToSave);
+        } else {
+            await addTask(taskToSave);
+        }
+        onClose();
+    };
+
+    const modalTitle = task.id ? '업무 수정' : '새 업무 추가';
+
+    return (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-40 p-4 animate-fade-in">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] transform scale-95 opacity-0 animate-scale-in">
+                 <div className="flex justify-between items-center p-5 border-b border-gray-200 sticky top-0 bg-white z-10">
+                    <h3 className="text-xl font-semibold text-gray-800">{modalTitle}</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors duration-200" title="닫기">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 140px)'}}> {/* Adjust max height for scroll */}
+                    <div>
+                        <label htmlFor="taskName" className="block text-sm font-medium text-gray-700 mb-1">업무명 <span className="text-red-500">*</span></label>
+                        <input type="text" id="taskName" name="name" value={task.name} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400" required />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="taskAssignee" className="block text-sm font-medium text-gray-700 mb-1">담당자 <span className="text-red-500">*</span></label>
+                            <select id="taskAssignee" name="assignee" value={task.assignee} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400" required>
+                                {teamMembers.map(member => <option key={member.name} value={member.name}>{member.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="taskCategory" className="block text-sm font-medium text-gray-700 mb-1">카테고리 <span className="text-red-500">*</span></label>
+                            <select id="taskCategory" name="category" value={task.category} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400" required>
+                                {taskCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label htmlFor="taskCycle" className="block text-sm font-medium text-gray-700 mb-1">수행 주기</label>
+                        <select id="taskCycle" name="cycle" value={task.cycle} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400" required>
+                           {taskCycles.map(cyc => <option key={cyc} value={cyc}>{cyc}</option>)} 
+                        </select>
+                    </div>
+
+                    <div>
+                        <label htmlFor="taskNotes" className="block text-sm font-medium text-gray-700 mb-1">참고 사항</label>
+                        <textarea
+                            id="taskNotes"
+                            name="notes"
+                            value={task.notes}
+                            onChange={handleChange}
+                            rows="3"
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-pink-400 focus:border-pink-400"
+                        ></textarea>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200"
+                        >
+                            취소
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-5 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+                        >
+                            저장
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
 
 // Main App Component
 const App = () => {
-  const [currentPage, setCurrentPage] = useState('dashboard'); // 'dashboard', 'all-tasks', 'detail', 'announcements', 'print'
+  const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedTask, setSelectedTask] = useState(null);
   const [showTaskFormModal, setShowTaskFormModal] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState(null); // null for create, task object for edit
+  const [taskToEdit, setTaskToEdit] = useState(null);
 
-  const handleNavigate = (page, item = null) => { // item 인자를 task 외에 다른 데이터도 받을 수 있도록 일반화
+  const handleNavigate = (page, item = null) => {
     setCurrentPage(page);
     if (page === 'detail') {
       setSelectedTask(item);
     } else {
-      setSelectedTask(null); // 다른 페이지로 이동 시 선택된 업무 초기화
+      setSelectedTask(null);
     }
   };
 
@@ -1048,12 +1511,11 @@ const App = () => {
   };
 
   const handleBackToList = () => {
-    setCurrentPage('all-tasks'); // 상세 페이지에서 돌아올 때 전체 업무 목록으로
+    setCurrentPage('all-tasks');
     setSelectedTask(null);
   };
 
   const handleBackFromPrint = () => {
-    // 인쇄 모드에서 돌아올 때, 이전에 상세 페이지였다면 상세 페이지로, 아니면 목록으로
     if (selectedTask) {
       setCurrentPage('detail');
     } else {
@@ -1062,12 +1524,12 @@ const App = () => {
   };
 
   const handleOpenCreateTask = () => {
-    setTaskToEdit(null); // Indicate creation mode
+    setTaskToEdit(null);
     setShowTaskFormModal(true);
   };
 
   const handleOpenEditTask = (task) => {
-    setTaskToEdit(task); // Pass the task to be edited
+    setTaskToEdit(task);
     setShowTaskFormModal(true);
   };
 
@@ -1078,66 +1540,15 @@ const App = () => {
 
   return (
     <ManualProvider>
-      {/* ManualProvider의 children prop이 단일 요소(Fragment)를 받도록 수정 */}
       <>
         <style>
           {`
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+          /* Base font and animations are already defined in index.html via Tailwind config script */
+          body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
           }
-          @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes fadeInLeft {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-          }
-          @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-          }
-
-          .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-          .animate-fade-in-down { animation: fadeInDown 0.5s ease-out forwards; }
-          .animate-fade-in-left { animation: fadeInLeft 0.5s ease-out forwards; }
-          .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
-          .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
-
-          /* Custom radio button styles for better visual */
-          .form-radio {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            display: inline-block;
-            vertical-align: middle;
-            background-origin: border-box;
-            user-select: none;
-            flex-shrink: 0;
-            border-radius: 100%;
-            border-width: 2px;
-            border-color: #d1d5db; /* gray-300 */
-            box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); /* No initial shadow */
-          }
-          .form-radio:checked {
-            background-color: #4f46e5; /* indigo-600 */
-            border-color: #4f46e5; /* indigo-600 */
-            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
-            background-size: 100% 100%;
-            background-position: center;
-            background-repeat: no-repeat;
-          }
-          .form-radio:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5); /* indigo-500 with opacity */
-          }
-
-
           /* Print specific styles */
           @media print {
             .no-print {
@@ -1145,26 +1556,59 @@ const App = () => {
             }
             body {
               background-color: #fff !important;
+              font-size: 10pt; /* Adjust base font size for print */
             }
             .print-page {
               box-shadow: none !important;
               margin: 0 !important;
-              padding: 0 !important;
+              padding: 20mm !important; /* Standard A4 margins approx */
+              border: none !important;
             }
+            .print-page-container {
+                margin: 0;
+                padding: 0;
+            }
+            /* Reduce icon sizes for print */
+            .print\:w-4 { width: 1rem; }
+            .print\:h-4 { height: 1rem; }
+            .print\:mr-2 { margin-right: 0.5rem; }
+            .print\:text-xs { font-size: 0.7rem; line-height: 0.9rem; }
+            .print\:text-sm { font-size: 0.8rem; line-height: 1.1rem; }
+            .print\:text-lg { font-size: 1.2rem; line-height: 1.5rem; }
+            .print\:text-2xl { font-size: 1.6rem; line-height: 1.9rem; }
+            .print\:mb-1 { margin-bottom: 0.25rem; }
+            .print\:mb-1\.5 { margin-bottom: 0.375rem; }
+            .print\:mb-4 { margin-bottom: 1rem; }
+            .print\:space-y-1 > * + * { margin-top: 0.25rem; }
+            .print\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .print\:gap-x-6 { column-gap: 1.5rem; }
+            .print\:gap-y-3 { row-gap: 0.75rem; }
+            .print\:bg-transparent { background-color: transparent !important; }
+            .print\:p-0 { padding: 0 !important; }
+            .print\:text-black { color: #000 !important; }
+            .print\:no-underline { text-decoration: none !important; }
+            .print\:mt-8 { margin-top: 2rem; }
+            a[href^="http"]:after {
+                content: " (" attr(href) ")";
+                font-size: 0.8em;
+                color: #555;
+            }
+            a[href^="http"].print\:no-underline:after {
+                content: ""; /* Disable link printing for specific cases if needed */
+            }
+
           }
           `}
         </style>
         <div className="min-h-screen bg-gray-100 font-inter antialiased flex flex-col">
           <Header
-            onSearchChange={() => {}}
             onNavigate={handleNavigate}
             currentPage={currentPage}
-            onOpenCreateTask={handleOpenCreateTask} // Pass new prop
+            onOpenCreateTask={handleOpenCreateTask}
           />
           <div className="flex flex-1 flex-col sm:flex-row p-4 gap-4">
             <Sidebar onNavigate={handleNavigate} currentPage={currentPage} />
             <main className="flex-1 overflow-auto">
-              {/* 활성 필터 칩 표시 - 'all-tasks' 페이지에서만 표시 */}
               {currentPage === 'all-tasks' && <FilterChips />}
 
               {currentPage === 'dashboard' && (
@@ -1178,23 +1622,19 @@ const App = () => {
                   task={selectedTask}
                   onBack={handleBackToList}
                   onPrint={handlePrintTask}
-                  onOpenEditTask={handleOpenEditTask} // Pass new prop
+                  onOpenEditTask={handleOpenEditTask}
                 />
               )}
               {currentPage === 'announcements' && (
                 <AnnouncementsPage onBack={() => handleNavigate('dashboard')} />
-              )}
-              {currentPage === 'print' && selectedTask && (
-                <PrintPage task={selectedTask} onBack={handleBackFromPrint} />
               )}
             </main>
           </div>
 
           {showTaskFormModal && (
             <TaskFormModal
-              task={taskToEdit} // Pass null for create, task object for edit
+              task={taskToEdit}
               onClose={handleCloseTaskFormModal}
-              // onSave prop removed as saving is handled internally by TaskFormModal
             />
           )}
         </div>
