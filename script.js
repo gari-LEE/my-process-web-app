@@ -1,5 +1,4 @@
 import React, { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react';
-import { Search, Filter, Star, Printer, ChevronRight, ChevronDown, Calendar, Clock, User, HardDrive, FileText, Info, Home, ListFilter, Bookmark, Users, LayoutDashboard, CalendarDays, CalendarClock, CalendarCheck, Edit, X, PlusCircle, Link, BellRing, Trash2 } from 'lucide-react'; // 아이콘 라이브러리
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -18,6 +17,9 @@ if (!firebase.apps.length) {
   firebase.app(); // if already initialized, use that one
 }
 const db = firebase.firestore();
+
+// Destructure icons from the global lucide object (loaded from CDN)
+const { Search, Filter, Star, Printer, ChevronRight, ChevronDown, Calendar, Clock, User, HardDrive, FileText, Info, Home, ListFilter, Bookmark, Users, LayoutDashboard, CalendarDays, CalendarClock, CalendarCheck, Edit, X, PlusCircle, Link, BellRing, Trash2 } = lucide;
 
 // ManualContext 생성
 const ManualContext = createContext();
