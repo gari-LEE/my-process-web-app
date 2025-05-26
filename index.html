@@ -3,182 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>업무 프로세스 관리 시스템</title>
+    <title>업무 프로세스 매뉴얼</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="lucide-icons.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
     <link rel="stylesheet" href="style.css">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Note: Directly loading Lucide React from CDN for global use is not standard.
+         In a real build, it would be bundled. For this direct HTML/JS setup, we'll
+         assume the icons are available via a build process or simplified import.
+         The component code will use 'lucide-react' imports as if it's a module.
+         For a truly standalone CDN, you'd need a pre-compiled icon library or inline SVGs.
+         For demonstration, the React code structure remains.
+    -->
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-200 font-inter p-4 sm:p-8">
-
-    <div id="main-app-content">
-        <div id="user-id-display" class="fixed top-4 right-4 bg-white dark:bg-gray-700 p-3 rounded-lg shadow-md flex items-center space-x-2 z-50">
-            <i data-lucide="user" class="w-5 h-5 text-blue-500"></i>
-            <span class="text-sm font-medium" id="current-user-info">현재 사용자: 익명 사용자</span>
-            </div>
-
-        <h1 class="text-4xl sm:text-5xl font-extrabold text-center text-blue-800 dark:text-blue-300 mb-8 sm:mb-12 drop-shadow-lg animate-fade-in">
-            업무 프로세스 관리 시스템
-        </h1>
-
-        <div id="message-display" class="fixed top-20 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-fade-in-down hidden"></div>
-
-        <div id="error-display" class="fixed top-20 left-1/2 -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-fade-in-down hidden"></div>
-
-        <div class="flex flex-col sm:flex-row items-center justify-between mb-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg animate-slide-in-up">
-            <div id="category-buttons" class="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-0">
-                </div>
-            <div class="flex flex-col gap-3">
-                <button id="manage-categories-btn" class="flex items-center justify-center px-3 py-2 bg-purple-500 text-white rounded-lg shadow-md hover:bg-purple-600 transition-all duration-300 ease-in-out transform hover:scale-105 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75">
-                    <i data-lucide="settings" class="w-5 h-5 mr-2"></i> 카테고리 관리
-                </button>
-                <button id="add-process-btn" class="flex items-center justify-center px-3 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 transition-all duration-300 ease-in-out transform hover:scale-105 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
-                    <i data-lucide="plus" class="w-5 h-5 mr-2"></i> 프로세스 추가
-                </button>
-                <button id="export-excel-btn" class="flex items-center justify-center px-3 py-2 bg-indigo-500 text-white rounded-lg shadow-md hover:bg-indigo-600 transition-all duration-300 ease-in-out transform hover:scale-105 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75" disabled>
-                    <i data-lucide="download" class="w-5 h-5 mr-2"></i> 엑셀 다운로드
-                </button>
-            </div>
+<body>
+    <noscript>JavaScript를 활성화해야 이 애플리케이션을 실행할 수 있습니다.</noscript>
+    <div id="root">
         </div>
-
-        <div class="flex flex-col md:flex-row gap-6">
-            <div id="master-list-panel" class="w-full md:w-1/3 lg:w-1/4 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 flex-shrink-0">
-                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">프로세스 목록</h2>
-                <div id="process-list-content" class="min-h-[150px] flex items-center justify-center">
-                    </div>
-                <div id="processes-end-ref"></div>
-            </div>
-
-            <div id="detail-view-panel" class="w-full md:w-2/3 lg:w-3/4 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 animate-fade-in flex items-center justify-center">
-                <div id="detail-view-content" class="text-center text-gray-600 dark:text-gray-400 p-8">
-                    <i data-lucide="eye" class="w-16 h-16 mx-auto mb-4 opacity-50"></i>
-                    <p class="text-xl font-semibold">왼쪽 목록에서 업무 프로세스를 선택해주세요.</p>
-                    <p class="text-sm mt-2">상세 정보를 보거나 수정할 수 있습니다.</p>
-                </div>
-                <button id="detail-back-btn" class="md:hidden absolute top-4 left-4 p-2 bg-gray-300 text-gray-800 rounded-full shadow-md hover:bg-gray-400 transition-all duration-300 ease-in-out hidden" title="목록으로 돌아가기">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="process-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in hidden">
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 transform scale-95 animate-scale-up flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-6 flex-shrink-0">
-                <h2 id="process-modal-title" class="text-2xl font-bold text-blue-700 dark:text-blue-300">새 프로세스 추가</h2>
-                <button id="close-process-modal-btn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <div class="flex-grow overflow-y-auto pr-2">
-                <div class="mb-4">
-                    <label for="mainTask" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">주요 업무</label>
-                    <input type="text" id="mainTask" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200" placeholder="주요 업무를 입력하세요">
-                </div>
-                <div class="mb-4">
-                    <label for="processDetail" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">업무 프로세스</label>
-                    <textarea id="processDetail" rows="3" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200 resize-y" placeholder="업무 프로세스를 입력하세요"></textarea>
-                    <button id="generate-description-btn" class="mt-2 flex items-center justify-center px-3 py-2 bg-purple-500 text-white rounded-lg shadow-md hover:bg-purple-600 transition-all duration-300 ease-in-out transform hover:scale-105 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75">
-                        <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i> ✨ 설명 개선
-                    </button>
-                </div>
-                <div class="mb-4">
-                    <label for="output" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">수행 결과물</label>
-                    <input type="text" id="output" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200" placeholder="수행 결과물을 입력하세요">
-                </div>
-                <div class="mb-4">
-                    <label for="reportCycle" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">주기 수행 보고 시기</label>
-                    <input type="text" id="reportCycle" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200" placeholder="주기 수행 보고 시기를 입력하세요">
-                </div>
-                <div class="mb-4">
-                    <label for="performer" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">수행자</label>
-                    <input type="text" id="performer" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200" placeholder="수행자를 입력하세요">
-                </div>
-                <div class="mb-4">
-                    <label for="sharedDept" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">공유 소속</label>
-                    <input type="text" id="sharedDept" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200" placeholder="공유 소속을 입력하세요">
-                </div>
-                <div class="mb-4">
-                    <label for="sharedUser" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">공유자</label>
-                    <input type="text" id="sharedUser" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200" placeholder="공유자를 입력하세요">
-                </div>
-                <div class="mb-4">
-                    <label for="manualStatus" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">매뉴얼 유무</label>
-                    <input type="text" id="manualStatus" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200" placeholder="매뉴얼 유무를 입력하세요">
-                </div>
-                <div class="mb-4">
-                    <label for="notes" class="block text-gray-700 dark:text-gray-300 text-sm font-semibold mb-2">비고</label>
-                    <textarea id="notes" rows="3" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200 resize-y" placeholder="비고를 입력하세요"></textarea>
-                </div>
-            </div>
-            <div class="flex justify-end gap-3 mt-6 flex-shrink-0">
-                <button id="cancel-process-btn" class="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg shadow-md hover:bg-gray-400 transition-all duration-300 ease-in-out font-semibold">
-                    취소
-                </button>
-                <button id="save-process-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 ease-in-out font-semibold flex items-center">
-                    <i data-lucide="save" class="w-5 h-5 mr-2"></i> 저장
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in hidden">
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-sm p-6 sm:p-8 transform scale-95 animate-scale-up">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-red-600 dark:text-red-400">삭제 확인</h2>
-                <button id="close-confirm-modal-btn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <p class="text-gray-700 dark:text-gray-300 mb-6">
-                정말로 이 프로세스를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-            </p>
-            <div class="flex justify-end gap-3">
-                <button id="cancel-delete-btn" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg shadow-md hover:bg-gray-400 transition-all duration-300 ease-in-out font-semibold">
-                    취소
-                </button>
-                <button id="confirm-delete-btn" class="px-5 py-2 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition-all duration-300 ease-in-out font-semibold">
-                    삭제
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="category-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in hidden">
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md p-6 sm:p-8 transform scale-95 animate-scale-up">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-purple-700 dark:text-purple-300">카테고리 관리</h2>
-                <button id="close-category-modal-btn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-
-            <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">새 카테고리 추가</h3>
-                <div class="flex gap-2">
-                    <input type="text" id="new-category-name-input" placeholder="새 카테고리 이름" class="flex-grow p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200">
-                    <button id="add-category-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 font-semibold">
-                        추가
-                    </button>
-                </div>
-            </div>
-
-            <div>
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">기존 카테고리</h3>
-                <ul id="category-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                    </ul>
-            </div>
-
-            <div class="flex justify-end mt-6">
-                <button id="category-modal-close-btn" class="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg shadow-md hover:bg-gray-400 transition-all duration-300 ease-in-out font-semibold">
-                    닫기
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
