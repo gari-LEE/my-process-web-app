@@ -1,71 +1,70 @@
-/* Basic Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 body {
-  font-family: sans-serif;
-  line-height: 1.6;
-  background-color: #f4f4f4;
-  color: #333;
-  padding: 20px;
+    font-family: 'Inter', sans-serif;
+    background-color: #F8F9FA; /* Warm Neutral Light Gray */
 }
 
-.container {
-  max-width: 1100px;
-  margin: auto;
-  overflow: auto;
-  padding: 0 20px;
+.dark body {
+    background-color: #1A202C;
 }
 
-header {
-  background: #333;
-  color: #fff;
-  padding-top: 30px;
-  min-height: 70px;
-  border-bottom: #0779e4 3px solid;
+/* Custom Loader */
+.loader {
+    border-top-color: #3B82F6; /* blue-500 */
+    -webkit-animation: spinner 1.5s linear infinite;
+    animation: spinner 1.5s linear infinite;
 }
 
-header a {
-  color: #fff;
-  text-decoration: none;
-  text-transform: uppercase;
-  font-size: 16px;
+@-webkit-keyframes spinner {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
 }
 
-header ul {
-  padding: 0;
-  list-style: none;
+@keyframes spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-header li {
-  float: left;
-  display: inline;
-  padding: 0 20px 0 20px;
+/* Custom Animations */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-header #branding {
-  float: left;
+.animate-fade-in-down {
+    animation: fadeInDown 0.5s ease-out forwards;
+}
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-header #branding h1 {
-  margin: 0;
+.animate-scale-up {
+    animation: scaleUp 0.3s ease-out forwards;
+}
+@keyframes scaleUp {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 
-header nav {
-  float: right;
-  margin-top: 10px;
+.animate-slide-in-up {
+    animation: slideInUp 0.6s ease-out forwards;
+}
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(50px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-header .highlight,
-header .current a {
-  color: #0779e4;
-  font-weight: bold;
+/* Hidden Utility Class for responsive design */
+.hidden-on-mobile {
+    display: none;
 }
-
-header a:hover {
-  color: #ccc;
-  font-weight: bold;
+@media (min-width: 768px) {
+    .hidden-on-mobile {
+        display: block; /* Revert to block on medium screens and up */
+    }
 }
