@@ -2172,6 +2172,40 @@
                 renderApp();
             }
         }
+
+        async function fetchAnnouncementsFromDB() {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('announcements').once('value');
+                const val = snapshot.val();
+                if (!val) return [];
+                return Object.entries(val).map(([id, data]) => ({ id, ...data }));
+            } else {
+                return JSON.parse(JSON.stringify(state.announcements));
+            }
+        }
+        async function fetchQuickLinksFromDB() {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('quickLinks').once('value');
+                const val = snapshot.val();
+                if (!val) return [];
+                return Object.entries(val).map(([id, data]) => ({ id, ...data }));
+            } else {
+                return JSON.parse(JSON.stringify(state.quickLinks));
+            }
+        }
+        async function fetchTeamOverviewFromDB() {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('teamOverview').once('value');
+                const val = snapshot.val();
+                if (!val) return state.teamOverview;
+                return val;
+            } else {
+                return JSON.parse(JSON.stringify(state.teamOverview));
+            }
+        }
     </script>
 </body>
 </html>
