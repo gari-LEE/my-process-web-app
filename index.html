@@ -603,7 +603,8 @@
                         : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
                     )
                 );
-                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'assigneeFilter', value: member.name, checked: state.filterAssignee === member.name });
+                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'assigneeFilter', value: member.name });
+                radio.checked = state.filterAssignee === member.name;
                 radio.addEventListener('change', () => setState({ filterAssignee: member.name }));
                 label.appendChild(radio);
                 label.appendChild(createElement('span', ['ml-2'], {}, [member.name]));
@@ -636,7 +637,8 @@
                         : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
                     )
                 );
-                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'categoryFilter', value: category, checked: state.filterCategory === category });
+                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'categoryFilter', value: category });
+                radio.checked = state.filterCategory === category;
                 radio.addEventListener('change', () => setState({ filterCategory: category }));
                 label.appendChild(radio);
                 label.appendChild(createElement('span', ['ml-2'], {}, [category]));
@@ -669,7 +671,8 @@
                         : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
                     )
                 );
-                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'cycleFilter', value: cycle, checked: state.filterCycle === cycle });
+                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'cycleFilter', value: cycle });
+                radio.checked = state.filterCycle === cycle;
                 radio.addEventListener('change', () => setState({ filterCycle: cycle }));
                 label.appendChild(radio);
                 label.appendChild(createElement('span', ['ml-2'], {}, [cycle]));
