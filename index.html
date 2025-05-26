@@ -338,6 +338,9 @@
             showConfirmationModal: false,
             confirmationModalMessage: '',
             confirmationModalCallback: null,
+            teamMembers: JSON.parse(JSON.stringify(teamMembers)),
+            actualTaskCategories: JSON.parse(JSON.stringify(actualTaskCategories)),
+            baseTaskCycles: JSON.parse(JSON.stringify(baseTaskCycles)),
         };
 
         // 이벤트 버스 (상태 변경 감지 및 렌더링 트리거)
@@ -593,7 +596,7 @@
             allAssigneeLabel.appendChild(createElement('span', ['ml-2'], {}, ['전체']));
             assigneeSpace.appendChild(allAssigneeLabel);
 
-            teamMembers.forEach(member => {
+            state.teamMembers.forEach(member => {
                 const label = createElement('label',
                     (state.filterAssignee === member.name
                         ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
@@ -626,7 +629,7 @@
             allCategoryLabel.appendChild(createElement('span', ['ml-2'], {}, ['전체']));
             categorySpace.appendChild(allCategoryLabel);
 
-            actualTaskCategories.forEach(category => {
+            state.actualTaskCategories.forEach(category => {
                 const label = createElement('label',
                     (state.filterCategory === category
                         ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
@@ -659,7 +662,7 @@
             allCycleLabel.appendChild(createElement('span', ['ml-2'], {}, ['전체']));
             cycleSpace.appendChild(allCycleLabel);
 
-            baseTaskCycles.forEach(cycle => {
+            state.baseTaskCycles.forEach(cycle => {
                 const label = createElement('label',
                     (state.filterCycle === cycle
                         ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
@@ -841,7 +844,7 @@
             const form = createElement('form', ['p-6', 'space-y-4']);
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
-                setState({ teamOverview: editedOverview, showEditTeamOverviewModal: false });
+                setStateWithDB({ updateTeamOverview: editedOverview, showEditTeamOverviewModal: false });
             });
 
             const titleDiv = createElement('div');
@@ -901,10 +904,11 @@
             const form = createElement('form', ['p-6', 'space-y-4']);
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const updatedAnnouncements = initialAnnouncement
-                    ? state.announcements.map(ann => ann.id === announcement.id ? announcement : ann)
-                    : [...state.announcements, { ...announcement, id: `ann-${Date.now()}` }];
-                setState({ announcements: updatedAnnouncements, showAnnouncementFormModal: false, announcementToEdit: null });
+                if (initialAnnouncement) {
+                    setStateWithDB({ updateAnnouncement: announcement, showAnnouncementFormModal: false, announcementToEdit: null });
+                } else {
+                    setStateWithDB({ addAnnouncement: announcement, showAnnouncementFormModal: false, announcementToEdit: null });
+                }
             });
 
             const titleDiv = createElement('div');
@@ -943,8 +947,7 @@
                         showConfirmationModal: true,
                         confirmationModalMessage: '정말로 이 공지를 삭제하시겠습니까?',
                         confirmationModalCallback: () => {
-                            const updatedAnnouncements = state.announcements.filter(ann => ann.id !== announcement.id);
-                            setState({ announcements: updatedAnnouncements, showAnnouncementFormModal: false, announcementToEdit: null, showConfirmationModal: false });
+                            setStateWithDB({ deleteAnnouncementId: announcement.id, showAnnouncementFormModal: false, announcementToEdit: null, showConfirmationModal: false });
                         }
                     });
                 });
@@ -988,10 +991,11 @@
             const form = createElement('form', ['p-6', 'space-y-4']);
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const updatedQuickLinks = initialLink
-                    ? state.quickLinks.map(l => l.id === link.id ? link : l)
-                    : [...state.quickLinks, { ...link, id: `link-${Date.now()}` }];
-                setState({ quickLinks: updatedQuickLinks, showQuickLinkFormModal: false, quickLinkToEdit: null });
+                if (initialLink) {
+                    setStateWithDB({ updateQuickLink: link, showQuickLinkFormModal: false, quickLinkToEdit: null });
+                } else {
+                    setStateWithDB({ addQuickLink: link, showQuickLinkFormModal: false, quickLinkToEdit: null });
+                }
             });
 
             const nameDiv = createElement('div');
@@ -1030,8 +1034,7 @@
                         showConfirmationModal: true,
                         confirmationModalMessage: '정말로 이 링크를 삭제하시겠습니까?',
                         confirmationModalCallback: () => {
-                            const updatedQuickLinks = state.quickLinks.filter(l => l.id !== link.id);
-                            setState({ quickLinks: updatedQuickLinks, showQuickLinkFormModal: false, quickLinkToEdit: null, showConfirmationModal: false });
+                            setStateWithDB({ deleteQuickLinkId: link.id, showQuickLinkFormModal: false, quickLinkToEdit: null, showConfirmationModal: false });
                         }
                     });
                 });
@@ -1105,7 +1108,7 @@
             const teamMembersSection = createElement('section', ['mb-8']);
             teamMembersSection.appendChild(createElement('h3', ['text-2xl', 'font-semibold', 'text-gray-800', 'mb-4', 'flex', 'items-center'], {}, [createIcon(Icons.User, ['w-6', 'h-6', 'mr-2', 'text-indigo-600']), ' 담당자별 업무 카드']));
             const memberGrid = createElement('div', ['grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-4', 'gap-6']);
-            teamMembers.forEach(member => {
+            state.teamMembers.forEach(member => {
                 const memberCard = createElement('div', [
                     'bg-white', 'p-6', 'rounded-lg', 'shadow-md', 'border', 'border-gray-200', 'hover:shadow-lg', 'transition-all', 'duration-300', 'cursor-pointer', 'transform', 'hover:-translate-y-1', 'hover:scale-[1.01]'
                 ], {
@@ -1206,8 +1209,7 @@
                             showConfirmationModal: true,
                             confirmationModalMessage: '정말로 이 링크를 삭제하시겠습니까?',
                             confirmationModalCallback: () => {
-                                const updatedQuickLinks = state.quickLinks.filter(l => l.id !== link.id);
-                                setState({ quickLinks: updatedQuickLinks, showQuickLinkFormModal: false, quickLinkToEdit: null, showConfirmationModal: false });
+                                setStateWithDB({ deleteQuickLinkId: link.id, showQuickLinkFormModal: false, quickLinkToEdit: null, showConfirmationModal: false });
                             }
                         });
                     });
@@ -1384,7 +1386,7 @@
                 id: 'assignee', name: 'assignee', required: true
             });
             assigneeSelect.appendChild(createElement('option', { value: '' }, {}, ['담당자 선택']));
-            teamMembers.forEach(member => {
+            state.teamMembers.forEach(member => {
                 const option = createElement('option', { value: member.name }, {}, [member.name]);
                 if (task.assignee === member.name) option.selected = true;
                 assigneeSelect.appendChild(option);
@@ -1400,7 +1402,7 @@
                 id: 'category', name: 'category', required: true
             });
             categorySelect.appendChild(createElement('option', { value: '' }, {}, ['카테고리 선택']));
-            actualTaskCategories.forEach(category => {
+            state.actualTaskCategories.forEach(category => {
                 const option = createElement('option', { value: category }, {}, [category]);
                 if (task.category === category) option.selected = true;
                 categorySelect.appendChild(option);
@@ -1414,7 +1416,7 @@
             cycleDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], {}, ['수행 주기']));
             const cycleFlex = createElement('div', ['flex', 'space-x-2']);
             const cycleBaseSelect = createElement('select', ['w-1/2', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], { id: 'cycleBase', required: true });
-            baseTaskCycles.forEach(cycle => {
+            state.baseTaskCycles.forEach(cycle => {
                 const option = createElement('option', { value: cycle }, {}, [cycle]);
                 if (selectedBaseCycle === cycle) option.selected = true;
                 cycleBaseSelect.appendChild(option);
@@ -1542,12 +1544,12 @@
             headerFlex.appendChild(createElement('h2', ['text-3xl', 'font-bold', 'text-indigo-700'], {}, [task.name]));
 
             const actionButtons = createElement('div', ['flex', 'space-x-3']);
+            // 즐겨찾기 버튼 (Firebase 연동)
             const favBtn = createElement('button', ['p-2', 'rounded-full', 'text-gray-400', 'hover:text-yellow-500', 'transition-colors', 'duration-200', 'transform', 'hover:scale-110'], {
                 'aria-label': task.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가', title: task.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'
             }, [createIcon(Icons.Star, (task.isFavorite ? ['w-7', 'h-7', 'fill-yellow-400', 'text-yellow-400'] : ['w-7', 'h-7', 'text-gray-300']))]);
             favBtn.addEventListener('click', () => {
-                const updatedTasks = state.tasks.map(t => t.id === task.id ? { ...t, isFavorite: !t.isFavorite } : t);
-                setState({ tasks: updatedTasks, selectedTask: { ...task, isFavorite: !task.isFavorite } }); // 선택된 업무도 업데이트
+                setStateWithDB({ updateTask: { ...task, isFavorite: !task.isFavorite }, selectedTask: { ...task, isFavorite: !task.isFavorite } });
             });
             actionButtons.appendChild(favBtn);
 
@@ -1556,6 +1558,21 @@
             }, [createIcon(Icons.Edit, ['w-7', 'h-7'])]);
             editBtn.addEventListener('click', () => setState({ showTaskFormModal: true, taskToEdit: task }));
             actionButtons.appendChild(editBtn);
+
+            // 삭제 버튼 추가 (Firebase 연동)
+            const deleteBtn = createElement('button', ['p-2', 'rounded-full', 'text-gray-400', 'hover:text-red-500', 'transition-colors', 'duration-200', 'transform', 'hover:scale-110'], {
+                'aria-label': '업무 삭제', title: '삭제'
+            }, [createIcon(Icons.Trash2, ['w-7', 'h-7'])]);
+            deleteBtn.addEventListener('click', () => {
+                setState({
+                    showConfirmationModal: true,
+                    confirmationModalMessage: '정말로 이 업무를 삭제하시겠습니까?',
+                    confirmationModalCallback: () => {
+                        setStateWithDB({ deleteTaskId: task.id, currentPage: 'all-tasks', selectedTask: null, showConfirmationModal: false });
+                    }
+                });
+            });
+            actionButtons.appendChild(deleteBtn);
 
             const printBtn = createElement('button', ['p-2', 'rounded-full', 'text-gray-400', 'hover:text-indigo-500', 'transition-colors', 'duration-200', 'transform', 'hover:scale-110'], {
                 'aria-label': '인쇄 모드', title: '인쇄'
@@ -1866,7 +1883,7 @@
                 const db = firebase.database();
                 const ref = db.ref('tasks').push();
                 const newTask = { ...task, id: ref.key };
-                await ref.set(newTask);
+                await ref.set(newTask); // 2중 구조 없이 바로 저장
                 return newTask;
             }
             console.warn('Firebase가 연결되어 있지 않습니다.');
@@ -1956,6 +1973,202 @@
         // 기존 setState를 setStateWithDB로 교체 (아래 예시, 실제로는 주요 폼/삭제/수정 이벤트에서 setState 대신 setStateWithDB 사용)
         // 예시: 업무 추가/수정/삭제 모달에서 setState 대신 setStateWithDB 사용
         // ... existing code ...
+
+        // Firebase 연동 함수들 (읽기/쓰기/수정/삭제)
+        async function fetchTeamMembersFromDB() {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('teamMembers').once('value');
+                const val = snapshot.val();
+                if (!val) return [];
+                return Object.entries(val).map(([id, data]) => ({ id, ...data }));
+            } else {
+                return JSON.parse(JSON.stringify(teamMembers));
+            }
+        }
+        async function addTeamMemberToDB(member) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const ref = db.ref('teamMembers').push();
+                const newMember = { ...member, id: ref.key };
+                await ref.set(newMember);
+                return newMember;
+            }
+            return null;
+        }
+        async function updateTeamMemberInDB(member) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                await db.ref('teamMembers/' + member.id).set(member);
+                return true;
+            }
+            return false;
+        }
+        async function deleteTeamMemberFromDB(memberId) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                await db.ref('teamMembers/' + memberId).remove();
+                return true;
+            }
+            return false;
+        }
+        async function fetchCategoriesFromDB() {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('actualTaskCategories').once('value');
+                const val = snapshot.val();
+                if (!val) return [];
+                return Object.values(val);
+            } else {
+                return JSON.parse(JSON.stringify(actualTaskCategories));
+            }
+        }
+        async function addCategoryToDB(category) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const ref = db.ref('actualTaskCategories').push();
+                await ref.set(category);
+                return category;
+            }
+            return null;
+        }
+        async function deleteCategoryFromDB(category) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('actualTaskCategories').once('value');
+                const val = snapshot.val();
+                if (!val) return false;
+                const key = Object.keys(val).find(k => val[k] === category);
+                if (key) {
+                    await db.ref('actualTaskCategories/' + key).remove();
+                    return true;
+                }
+            }
+            return false;
+        }
+        async function fetchCyclesFromDB() {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('baseTaskCycles').once('value');
+                const val = snapshot.val();
+                if (!val) return [];
+                return Object.values(val);
+            } else {
+                return JSON.parse(JSON.stringify(baseTaskCycles));
+            }
+        }
+        async function addCycleToDB(cycle) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const ref = db.ref('baseTaskCycles').push();
+                await ref.set(cycle);
+                return cycle;
+            }
+            return null;
+        }
+        async function deleteCycleFromDB(cycle) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('baseTaskCycles').once('value');
+                const val = snapshot.val();
+                if (!val) return false;
+                const key = Object.keys(val).find(k => val[k] === cycle);
+                if (key) {
+                    await db.ref('baseTaskCycles/' + key).remove();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            setState({ isLoading: true }, false);
+            if (window.firebase && !(window.firebase.apps && window.firebase.apps.length)) {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBdDXOEreJzytGMr8anZ9mg7I_kYrnx7gk",
+                    authDomain: "my-process-app.firebaseapp.com",
+                    databaseURL: "https://my-process-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "my-process-app",
+                    storageBucket: "my-process-app.appspot.com",
+                    messagingSenderId: "1044912986098",
+                    appId: "1:1044912986098:web:8f3d4d14cd7a2564fefd6b"
+                };
+                firebase.initializeApp(firebaseConfig);
+            }
+            const [tasks, announcements, quickLinks, teamOverview, teamMembers, actualTaskCategories, baseTaskCycles] = await Promise.all([
+                fetchTasksFromDB(),
+                fetchAnnouncementsFromDB(),
+                fetchQuickLinksFromDB(),
+                fetchTeamOverviewFromDB(),
+                fetchTeamMembersFromDB(),
+                fetchCategoriesFromDB(),
+                fetchCyclesFromDB()
+            ]);
+            setState({ tasks, announcements, quickLinks, teamOverview, teamMembers, actualTaskCategories, baseTaskCycles, isLoading: false });
+        });
+
+        async function setStateWithDB(newState, reRender = true) {
+            // ... 기존 task/announcement/quickLink/teamOverview ...
+            // teamMembers
+            if (newState.addTeamMember) {
+                try {
+                    const newMember = await addTeamMemberToDB(newState.addTeamMember);
+                    if (newMember) {
+                        state.teamMembers = [...state.teamMembers, newMember];
+                    }
+                } catch (e) { alert('Firebase에 팀원을 추가할 수 없습니다.'); }
+                delete newState.addTeamMember;
+            }
+            if (newState.updateTeamMember) {
+                try {
+                    await updateTeamMemberInDB(newState.updateTeamMember);
+                    state.teamMembers = state.teamMembers.map(m => m.id === newState.updateTeamMember.id ? newState.updateTeamMember : m);
+                } catch (e) { alert('Firebase에 팀원을 수정할 수 없습니다.'); }
+                delete newState.updateTeamMember;
+            }
+            if (newState.deleteTeamMemberId) {
+                try {
+                    await deleteTeamMemberFromDB(newState.deleteTeamMemberId);
+                    state.teamMembers = state.teamMembers.filter(m => m.id !== newState.deleteTeamMemberId);
+                } catch (e) { alert('Firebase에서 팀원을 삭제할 수 없습니다.'); }
+                delete newState.deleteTeamMemberId;
+            }
+            // 카테고리
+            if (newState.addCategory) {
+                try {
+                    await addCategoryToDB(newState.addCategory);
+                    state.actualTaskCategories = [...state.actualTaskCategories, newState.addCategory];
+                } catch (e) { alert('Firebase에 카테고리를 추가할 수 없습니다.'); }
+                delete newState.addCategory;
+            }
+            if (newState.deleteCategory) {
+                try {
+                    await deleteCategoryFromDB(newState.deleteCategory);
+                    state.actualTaskCategories = state.actualTaskCategories.filter(c => c !== newState.deleteCategory);
+                } catch (e) { alert('Firebase에서 카테고리를 삭제할 수 없습니다.'); }
+                delete newState.deleteCategory;
+            }
+            // 주기
+            if (newState.addCycle) {
+                try {
+                    await addCycleToDB(newState.addCycle);
+                    state.baseTaskCycles = [...state.baseTaskCycles, newState.addCycle];
+                } catch (e) { alert('Firebase에 주기를 추가할 수 없습니다.'); }
+                delete newState.addCycle;
+            }
+            if (newState.deleteCycle) {
+                try {
+                    await deleteCycleFromDB(newState.deleteCycle);
+                    state.baseTaskCycles = state.baseTaskCycles.filter(c => c !== newState.deleteCycle);
+                } catch (e) { alert('Firebase에서 주기를 삭제할 수 없습니다.'); }
+                delete newState.deleteCycle;
+            }
+            Object.assign(state, newState);
+            eventBus.dispatchEvent(new CustomEvent('stateChange', { detail: state }));
+            if (reRender) {
+                renderApp();
+            }
+        }
     </script>
 </body>
 </html>
