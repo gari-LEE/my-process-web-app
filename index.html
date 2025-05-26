@@ -3,23 +3,1959 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>업무 프로세스 매뉴얼</title>
+    <title>업무 매뉴얼</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Note: Directly loading Lucide React from CDN for global use is not standard.
-         In a real build, it would be bundled. For this direct HTML/JS setup, we'll
-         assume the icons are available via a build process or simplified import.
-         The component code will use 'lucide-react' imports as if it's a module.
-         For a truly standalone CDN, you'd need a pre-compiled icon library or inline SVGs.
-         For demonstration, the React code structure remains.
-    -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* 가로 스크롤 방지 */
+        }
+
+        /* 애니메이션 키프레임 정의 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* 애니메이션 클래스 적용 */
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-fade-in-down { animation: fadeInDown 0.5s ease-out forwards; }
+        .animate-fade-in-left { animation: fadeInLeft 0.5s ease-out forwards; }
+        .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+        .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+        .animate-slide-in-right { animation: slideInRight 0.3s ease-out forwards; }
+        .animate-slide-out-right { animation: slideOutRight 0.3s ease-out forwards; }
+
+        /* 커스텀 라디오 버튼 스타일 */
+        .form-radio {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            display: inline-block;
+            vertical-align: middle;
+            background-origin: border-box;
+            user-select: none;
+            flex-shrink: 0;
+            border-radius: 100%;
+            border-width: 2px;
+            border-color: #d1d5db; /* gray-300 */
+            box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); /* 초기 그림자 없음 */
+        }
+        .form-radio:checked {
+            background-color: #4f46e5; /* indigo-600 */
+            border-color: #4f46e5; /* indigo-600 */
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .form-radio:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5); /* indigo-500 with opacity */
+        }
+
+        /* 인쇄 시 특정 스타일 */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: #fff !important;
+            }
+            .print-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
 </head>
-<body>
-    <noscript>JavaScript를 활성화해야 이 애플리케이션을 실행할 수 있습니다.</noscript>
-    <div id="root">
+<body class="min-h-screen bg-gray-100 antialiased flex flex-col">
+    <div id="app" class="min-h-screen bg-gray-100 font-inter antialiased flex flex-col">
         </div>
-    <script type="module" src="script.js"></script>
+
+    <script>
+        // 목업 데이터 (초기 데이터)
+        const mockTasks = [
+            {
+                id: 'task-1',
+                name: 'QA 데이터 분석 및 보고',
+                category: '상담품질',
+                assignee: '권미 프로',
+                processSteps: [
+                    '주간 QA 데이터 취합',
+                    '데이터 분석 및 개선점 도출',
+                    '분석 결과 보고서 작성',
+                    '관련 팀에 공유 및 피드백 반영'
+                ],
+                cycle: '주간 1회',
+                deliverables: ['주간 QA 분석 보고서', '개선 액션 플랜'],
+                fileLink: '#',
+                fileLocation: '공유 드라이브/QA/2024',
+                notes: '매주 월요일 오전까지 완료',
+                isFavorite: false,
+            },
+            {
+                id: 'task-2',
+                name: '해피존(주) 고객 VOC 처리',
+                category: '고객관리',
+                assignee: '권미 프로',
+                processSteps: [
+                    '해피존 접수된 고객 VOC 확인',
+                    '관련 부서에 내용 전달 및 회신 요청',
+                    '고객에게 처리 결과 안내',
+                    'VOC 데이터 기록 및 관리'
+                ],
+                cycle: '일일',
+                deliverables: ['VOC 처리 완료 보고', '고객 회신 내역'],
+                fileLink: '#',
+                fileLocation: 'CRM 시스템',
+                notes: '긴급 VOC는 즉시 처리',
+                isFavorite: false,
+            },
+            {
+                id: 'task-3',
+                name: '콜시스템 일일 점검',
+                category: '콜시스템',
+                assignee: '이정훈 프로',
+                processSteps: [
+                    '콜시스템 로그인 및 상태 확인',
+                    '통화 품질 및 네트워크 안정성 점검',
+                    '오류 발생 시 IT팀에 보고 및 조치 요청',
+                    '점검 결과 기록'
+                ],
+                cycle: '일일',
+                deliverables: ['일일 콜시스템 점검 보고서'],
+                fileLink: '#',
+                fileLocation: '내부 시스템/콜시스템 로그',
+                notes: '매일 오전 9시 이전 완료',
+                isFavorite: false,
+            },
+            {
+                id: 'task-4',
+                name: '고객응대 매뉴얼 업데이트',
+                category: '콜시스템',
+                assignee: '이정훈 프로',
+                processSteps: [
+                    '최신 고객 피드백 및 정책 변경 사항 검토',
+                    '매뉴얼 내용 수정 및 보완',
+                    '관련 팀원들에게 변경 사항 공지',
+                    '업데이트된 매뉴얼 배포'
+                ],
+                cycle: '월간 1회',
+                deliverables: ['업데이트된 고객응대 매뉴얼'],
+                fileLink: '#',
+                fileLocation: '공유 드라이브/매뉴얼/고객응대',
+                notes: '매월 마지막 주 금요일 업데이트',
+                isFavorite: false,
+            },
+            {
+                id: 'task-5',
+                name: '진료일정 확인 및 조정',
+                category: '진료지원',
+                assignee: '김유미 프로',
+                processSteps: [
+                    '주간 진료일정표 확인',
+                    '의료진 휴가 및 변경 사항 반영',
+                    '예약 고객에게 변경 사항 안내',
+                    '최종 일정표 확정 및 공유'
+                ],
+                cycle: '주간 2회',
+                deliverables: ['주간 진료일정표'],
+                fileLink: '#',
+                fileLocation: '내부 시스템/진료일정',
+                notes: '매주 목요일 오후까지 완료',
+                isFavorite: false,
+            },
+            {
+                id: 'task-6',
+                name: '고객 문자발송 (안내/홍보)',
+                category: '진료지원',
+                assignee: '김유미 프로',
+                processSteps: [
+                    '발송 대상 고객 리스트 확인',
+                    '문자 내용 작성 및 승인 요청',
+                    '문자 발송 시스템을 통해 발송',
+                    '발송 결과 모니터링'
+                ],
+                cycle: '발생시',
+                deliverables: ['발송 완료 보고'],
+                fileLink: '#',
+                fileLocation: '문자 발송 시스템',
+                notes: '긴급 공지는 즉시 발송',
+                isFavorite: false,
+            },
+            {
+                id: 'task-7',
+                name: '해피존(부) 고객 만족도 조사',
+                category: '고객관리',
+                assignee: '정현주 프로',
+                processSteps: [
+                    '고객 만족도 조사 설문지 준비',
+                    '설문 대상 고객 선정 및 발송',
+                    '설문 결과 취합 및 분석',
+                    '분석 보고서 작성 및 공유'
+                ],
+                cycle: '월간 1회',
+                deliverables: ['월간 고객 만족도 조사 보고서'],
+                fileLink: '#',
+                fileLocation: '공유 드라이브/고객만족도/2024',
+                notes: '매월 첫째 주에 진행',
+                isFavorite: false,
+            },
+            {
+                id: 'task-8',
+                name: '팀 운영 지원 및 비품 관리',
+                category: '팀운영',
+                assignee: '정현주 프로',
+                processSteps: [
+                    '팀 비품 재고 확인 및 부족분 신청',
+                    '회의실 예약 및 회의 준비 지원',
+                    '팀원 요청 사항 처리',
+                    '사무 환경 정리 및 유지'
+                ],
+                cycle: '일일',
+                deliverables: ['비품 재고 현황', '회의록'],
+                fileLink: '#',
+                fileLocation: '팀 공유 폴더',
+                notes: '필요시 수시로 처리',
+                isFavorite: false,
+            },
+            {
+                id: 'task-9',
+                name: '고객감동위원회 회의 준비',
+                category: '고객관리',
+                assignee: '권미 프로',
+                processSteps: [
+                    '회의 안건 및 자료 준비',
+                    '회의록 작성',
+                    '회의 결과 공유 및 후속 조치 팔로우업'
+                ],
+                cycle: '월간 1회',
+                deliverables: ['회의록', '액션 아이템 리스트'],
+                fileLink: '#',
+                fileLocation: '공유 드라이브/고객감동위원회',
+                notes: '매월 셋째 주 진행',
+                isFavorite: false,
+            },
+            {
+                id: 'task-10',
+                name: '주간 업무 보고서 작성',
+                category: '팀운영',
+                assignee: '정현주 프로',
+                processSteps: [
+                    '팀원별 주간 업무 내용 취합',
+                    '주요 성과 및 이슈 정리',
+                    '주간 보고서 양식에 맞춰 작성',
+                    '팀장님께 보고'
+                ],
+                cycle: '주간 1회',
+                deliverables: ['주간 업무 보고서'],
+                fileLink: '#',
+                fileLocation: '팀 공유 폴더/보고서',
+                notes: '매주 금요일 오후까지 완료',
+                isFavorite: false,
+            },
+        ];
+
+        const teamMembers = [
+            { name: '권미 프로', roles: 'QA, 해피존(주), 고객감동위원회' },
+            { name: '이정훈 프로', roles: '콜시스템, 고객응대 매뉴얼' },
+            { name: '김유미 프로', roles: '진료일정, 문자발송' },
+            { name: '정현주 프로', roles: '해피존(부), 팀운영지원' },
+        ];
+
+        const actualTaskCategories = [
+            '상담품질', '콜시스템', '고객관리', '진료지원', '팀운영'
+        ];
+
+        const baseTaskCycles = [
+            '일일', '주간', '월간', '년간', '발생시'
+        ];
+
+        // 전역 상태 관리
+        const state = {
+            tasks: JSON.parse(JSON.stringify(mockTasks)), // 목업 데이터 수정 방지를 위한 깊은 복사
+            searchTerm: '',
+            filterCycle: '',
+            filterAssignee: '',
+            filterCategory: '',
+            showFavorites: false,
+            isLoading: true,
+            currentPage: 'dashboard', // 'dashboard', 'all-tasks', 'detail', 'print'
+            selectedTask: null,
+            showTaskFormModal: false,
+            taskToEdit: null,
+            showEditTeamOverviewModal: false,
+            showAnnouncementFormModal: false,
+            announcementToEdit: null,
+            showQuickLinkFormModal: false,
+            quickLinkToEdit: null,
+            teamOverview: {
+                title: '상담지원팀 개요',
+                content: '상담지원팀은 고객 소통 최전선에서 고객 만족을 위한 다양한 업무를 수행합니다. 본 매뉴얼은 팀원들이 업무를 효율적으로 수행하고, 필요한 정보를 신속하게 찾을 수 있도록 돕습니다.'
+            },
+            announcements: [
+                { id: 'ann-1', title: '월간 업무 보고서 마감 안내', content: '이번 달 월간 업무 보고서 제출 마감일은 25일입니다. 기한 내 제출 바랍니다.', date: '2025-05-20' },
+                { id: 'ann-2', title: '신규 콜시스템 교육 일정', content: '다음 주 수요일 오후 2시, 신규 콜시스템 교육이 진행됩니다. 참석 바랍니다.', date: '2025-05-18' },
+            ],
+            quickLinks: [
+                { id: 'link-1', name: '회사 인트라넷', url: 'https://www.google.com', description: '내부 시스템 접속' },
+                { id: 'link-2', name: '고객 VOC 시스템', url: 'https://www.google.com', description: '고객 불만 접수 및 처리' },
+                { id: 'link-3', name: '주간 회의록', url: 'https://www.google.com', description: '팀 주간 회의록 확인' },
+            ],
+            showConfirmationModal: false,
+            confirmationModalMessage: '',
+            confirmationModalCallback: null,
+        };
+
+        // 이벤트 버스 (상태 변경 감지 및 렌더링 트리거)
+        const eventBus = new EventTarget();
+
+        /**
+         * 애플리케이션 상태를 업데이트하고 필요 시 UI를 다시 렌더링합니다.
+         * @param {object} newState - 업데이트할 새로운 상태 객체
+         * @param {boolean} [reRender=true] - UI를 다시 렌더링할지 여부
+         */
+        function setState(newState, reRender = true) {
+            Object.assign(state, newState);
+            eventBus.dispatchEvent(new CustomEvent('stateChange', { detail: state }));
+            if (reRender) {
+                renderApp();
+            }
+        }
+
+        /**
+         * DOM 요소를 생성하는 유틸리티 함수
+         * @param {string} tag - 생성할 HTML 태그 이름
+         * @param {string[]} [classes=[]] - 요소에 적용할 Tailwind CSS 클래스 배열
+         * @param {object} [attributes={}] - 요소에 설정할 속성 객체
+         * @param {(string|Node)[]} [children=[]] - 요소의 자식 노드 배열 (문자열 또는 DOM 노드)
+         * @returns {HTMLElement} 생성된 DOM 요소
+         */
+        function createElement(tag, classes = [], attributes = {}, children = []) {
+            const element = document.createElement(tag);
+            if (classes.length > 0) {
+                element.className = classes.join(' ');
+            }
+            for (const key in attributes) {
+                element.setAttribute(key, attributes[key]);
+            }
+            children.forEach(child => {
+                if (typeof child === 'string') {
+                    element.appendChild(document.createTextNode(child));
+                } else if (child instanceof Node) {
+                    element.appendChild(child);
+                }
+            });
+            return element;
+        }
+
+        /**
+         * SVG 아이콘을 생성하는 헬퍼 함수
+         * @param {string} svgPath - SVG `<path>` 또는 기타 내부 내용
+         * @param {string[]} [classes=[]] - SVG 요소에 적용할 클래스
+         * @returns {SVGElement} 생성된 SVG 아이콘 요소
+         */
+        function createIcon(svgPath, classes = []) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '24');
+            svg.setAttribute('height', '24');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', 'currentColor');
+            svg.setAttribute('stroke-width', '2');
+            svg.setAttribute('stroke-linecap', 'round');
+            svg.setAttribute('stroke-linejoin', 'round');
+            svg.className = classes.join(' ');
+            svg.innerHTML = svgPath;
+            return svg;
+        }
+
+        // Lucide-React 기반 아이콘 SVG 경로 정의
+        const Icons = {
+            Search: `<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>`,
+            Filter: `<path d="M22 3H2l8 12.46V19l4 2v-5.54L22 3z"/>`,
+            Star: `<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>`,
+            Printer: `<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M18 14V2H6v12"/><path d="M18 8H6"/><path d="M10 18h4"/>`,
+            ChevronRight: `<path d="m9 18 6-6-6-6"/>`,
+            ChevronDown: `<path d="m6 9 6 6 6-6"/>`,
+            Calendar: `<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>`,
+            Clock: `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
+            User: `<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+            HardDrive: `<path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 2H7.24a2 2 0 0 0-1.79 3.11z"/><line x1="6" x2="6.01" y1="16" y2="16"/><line x1="10" x2="10.01" y1="16" y2="16"/>`,
+            FileText: `<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>`,
+            Info: `<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>`,
+            Home: `<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
+            ListFilter: `<path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/>`,
+            Bookmark: `<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>`,
+            Users: `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13A4 4 0 0 1 22 8"/>`,
+            LayoutDashboard: `<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>`,
+            CalendarDays: `<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>`,
+            CalendarClock: `<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><circle cx="18" cy="18" r="4"/><path d="M18 20v-2h-1"/>`,
+            CalendarCheck: `<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="m9 16 2 2 4-4"/>`,
+            Edit: `<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>`,
+            X: `<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`,
+            PlusCircle: `<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/>`,
+            Link: `<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07L9.4 6.6"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07L14.6 17.4"/>`,
+            BellRing: `<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M10.36 19a3.5 3.5 0 0 0 3.28 0"/><path d="M2.5 17.5c1.38-1.38 3.9-.7 5.5.9"/><path d="M21.5 17.5c-1.38-1.38-3.9-.7-5.5.9"/>`,
+            Trash2: `<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>`,
+        };
+
+        /**
+         * 헤더 컴포넌트를 렌더링합니다.
+         * 검색 입력 필드와 네비게이션 버튼을 포함합니다.
+         */
+        function renderHeader() {
+            const header = createElement('header', ['bg-white', 'shadow-md', 'p-4', 'flex', 'flex-col', 'sm:flex-row', 'items-center', 'justify-between', 'sticky', 'top-0', 'z-10', 'rounded-b-lg', 'animate-fade-in-down']);
+
+            const leftSection = createElement('div', ['flex', 'items-center', 'mb-4', 'sm:mb-0']);
+            leftSection.appendChild(createElement('h1', ['text-2xl', 'font-bold', 'text-indigo-700', 'mr-4'], {}, ['업무 매뉴얼']));
+
+            const nav = createElement('nav', ['hidden', 'sm:flex', 'space-x-4']);
+            const dashboardBtn = createElement('button',
+                (state.currentPage === 'dashboard'
+                    ? ['px-3', 'py-2', 'rounded-md', 'text-sm', 'font-medium', 'transition-all', 'duration-300', 'bg-indigo-100', 'text-indigo-700', 'shadow-sm']
+                    : ['px-3', 'py-2', 'rounded-md', 'text-sm', 'font-medium', 'transition-all', 'duration-300', 'text-gray-600', 'hover:bg-gray-100', 'hover:text-indigo-600']
+                ),
+                { title: '대시보드 페이지로 이동' },
+                [
+                    createIcon(Icons.Home, ['inline-block', 'mr-1', 'w-4', 'h-4']),
+                    ' 대시보드'
+                ]
+            );
+            dashboardBtn.addEventListener('click', () => setState({ currentPage: 'dashboard', selectedTask: null }));
+            nav.appendChild(dashboardBtn);
+
+            const allTasksBtn = createElement('button',
+                (state.currentPage === 'all-tasks'
+                    ? ['px-3', 'py-2', 'rounded-md', 'text-sm', 'font-medium', 'transition-all', 'duration-300', 'bg-indigo-100', 'text-indigo-700', 'shadow-sm']
+                    : ['px-3', 'py-2', 'rounded-md', 'text-sm', 'font-medium', 'transition-all', 'duration-300', 'text-gray-600', 'hover:bg-gray-100', 'hover:text-indigo-600']
+                ),
+                { title: '전체 업무 목록 보기' },
+                [
+                    createIcon(Icons.ListFilter, ['inline-block', 'mr-1', 'w-4', 'h-4']),
+                    ' 전체 업무'
+                ]
+            );
+            allTasksBtn.addEventListener('click', () => setState({ currentPage: 'all-tasks', selectedTask: null }));
+            nav.appendChild(allTasksBtn);
+
+            const createTaskBtn = createElement('button', [
+                'px-3', 'py-2', 'rounded-md', 'text-sm', 'font-medium', 'bg-pink-500', 'text-white', 'hover:bg-pink-600', 'transition-all', 'duration-300', 'shadow-md', 'hover:shadow-lg', 'flex', 'items-center'
+            ], { title: '새로운 업무 추가' }, [
+                createIcon(Icons.PlusCircle, ['inline-block', 'mr-1', 'w-4', 'h-4']),
+                ' 새 업무 추가'
+            ]);
+            createTaskBtn.addEventListener('click', () => setState({ showTaskFormModal: true, taskToEdit: null }));
+            nav.appendChild(createTaskBtn);
+
+            leftSection.appendChild(nav);
+            header.appendChild(leftSection);
+
+            // 검색창은 전체업무 페이지에서만 보이게
+            let showSearch = state.currentPage === 'all-tasks';
+            if (showSearch) {
+                const searchContainer = createElement('div', ['flex', 'items-center', 'w-full', 'sm:w-1/3', 'gap-2']);
+                // 왼쪽 검색 아이콘 제거
+                const searchInput = createElement('input', [
+                    'w-full', 'pr-4', 'py-2', 'border', 'border-gray-300', 'rounded-lg', 'focus:outline-none', 'focus:ring-2', 'focus:ring-pink-400', 'transition-all', 'duration-200'
+                ], {
+                    type: 'text',
+                    placeholder: '업무명, 담당자, 키워드 검색...'
+                });
+                searchInput.value = state.searchTerm || '';
+                let tempSearch = state.searchTerm || '';
+                searchInput.addEventListener('input', (e) => {
+                    tempSearch = e.target.value;
+                });
+                // 더 가독성 좋은 검색 버튼
+                const searchBtn = createElement('button', [
+                    'ml-2', 'px-4', 'py-2', 'border', 'border-blue-500', 'bg-white', 'text-blue-600', 'rounded-lg', 'hover:bg-blue-500', 'hover:text-white', 'transition-all', 'duration-200', 'text-sm', 'font-semibold', 'flex', 'items-center'
+                ], {}, [
+                    createIcon(Icons.Search, ['w-4', 'h-4', 'mr-1']),
+                    '검색'
+                ]);
+                searchBtn.addEventListener('click', () => {
+                    setState({ searchTerm: tempSearch });
+                });
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        setState({ searchTerm: tempSearch });
+                    }
+                });
+                searchContainer.appendChild(searchInput);
+                searchContainer.appendChild(searchBtn);
+                header.appendChild(searchContainer);
+            }
+
+            return header;
+        }
+
+        /**
+         * 사이드바 컴포넌트를 렌더링합니다.
+         * 필터링 옵션 (즐겨찾기, 담당자, 카테고리, 주기)을 포함합니다.
+         */
+        function renderSidebar() {
+            if (state.currentPage === 'dashboard') {
+                return null; // 대시보드 페이지에서는 사이드바를 렌더링하지 않음
+            }
+
+            const aside = createElement('aside', ['bg-gray-50', 'p-4', 'w-full', 'sm:w-64', 'flex-shrink-0', 'rounded-lg', 'shadow-md', 'animate-fade-in-left']);
+            const nav = createElement('nav', ['space-y-6']);
+
+            const filterHeader = createElement('div', ['mb-6']);
+            filterHeader.appendChild(createElement('h3', ['text-lg', 'font-semibold', 'text-gray-800', 'mb-2'], {}, ['필터']));
+            const clearFilterBtn = createElement('button', [
+                'w-full', 'px-4', 'py-2', 'bg-indigo-500', 'text-white', 'rounded-md', 'hover:bg-indigo-600', 'transition-all', 'duration-300', 'flex', 'items-center', 'justify-center', 'text-sm', 'font-medium', 'shadow-md', 'hover:shadow-lg'
+            ], { title: '모든 필터 초기화' }, [
+                createIcon(Icons.Filter, ['w-4', 'h-4', 'mr-2']),
+                ' 필터 초기화'
+            ]);
+            clearFilterBtn.addEventListener('click', () => {
+                setState({
+                    filterAssignee: '',
+                    filterCategory: '',
+                    filterCycle: '',
+                    showFavorites: false,
+                    searchTerm: '' // 검색어도 초기화
+                });
+            });
+            filterHeader.appendChild(clearFilterBtn);
+            nav.appendChild(filterHeader);
+
+            // 즐겨찾기 토글 필터
+            const favoriteDiv = createElement('div', ['border-b', 'border-gray-200', 'pb-4']);
+            const favoriteLabel = createElement('label', ['flex', 'items-center', 'justify-between', 'cursor-pointer', 'py-2']);
+            favoriteLabel.appendChild(createElement('span', ['text-gray-700', 'font-medium', 'flex', 'items-center'], {}, [createIcon(Icons.Bookmark, ['w-4', 'h-4', 'mr-2']), ' 즐겨찾기']));
+            const favoriteInput = createElement('input', ['sr-only', 'peer'], {
+                type: 'checkbox',
+                checked: state.showFavorites
+            });
+            favoriteInput.addEventListener('change', () => setState({ showFavorites: !state.showFavorites }));
+            favoriteLabel.appendChild(favoriteInput);
+            const favoriteToggleDiv = createElement('div',
+                (state.showFavorites
+                    ? ['relative', 'w-11', 'h-6', 'bg-gray-200', 'peer-focus:outline-none', 'peer-focus:ring-2', 'peer-focus:ring-indigo-300', 'rounded-full', 'peer', 'peer-checked:after:translate-x-full', 'peer-checked:after:border-white', "after:content-['']", 'after:absolute', 'after:top-[2px]', 'after:left-[2px]', 'after:bg-white', 'after:border', 'after:border-gray-300', 'after:rounded-full', 'after:h-5', 'after:w-5', 'after:transition-all', 'peer-checked:bg-indigo-600']
+                    : ['relative', 'w-11', 'h-6', 'bg-gray-200', 'peer-focus:outline-none', 'peer-focus:ring-2', 'peer-focus:ring-indigo-300', 'rounded-full', 'peer', "after:content-['']", 'after:absolute', 'after:top-[2px]', 'after:left-[2px]', 'after:bg-white', 'after:border', 'after:border-gray-300', 'after:rounded-full', 'after:h-5', 'after:w-5', 'after:transition-all']
+                )
+            );
+            favoriteLabel.appendChild(favoriteToggleDiv);
+            favoriteDiv.appendChild(favoriteLabel);
+            nav.appendChild(favoriteDiv);
+
+            // 담당자별 필터
+            const assigneeDiv = createElement('div', ['border-b', 'border-gray-200', 'pb-4']);
+            assigneeDiv.appendChild(createElement('h4', ['text-gray-700', 'font-medium', 'mb-2', 'flex', 'items-center'], {}, [createIcon(Icons.Users, ['w-4', 'h-4', 'mr-2']), ' 담당자별']));
+            const assigneeSpace = createElement('div', ['space-y-1']);
+
+            const allAssigneeLabel = createElement('label',
+                (state.filterAssignee === ''
+                    ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
+                    : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
+                )
+            );
+            const allAssigneeRadio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'assigneeFilter', value: '', checked: state.filterAssignee === '' });
+            allAssigneeRadio.addEventListener('change', () => setState({ filterAssignee: '' }));
+            allAssigneeLabel.appendChild(allAssigneeRadio);
+            allAssigneeLabel.appendChild(createElement('span', ['ml-2'], {}, ['전체']));
+            assigneeSpace.appendChild(allAssigneeLabel);
+
+            teamMembers.forEach(member => {
+                const label = createElement('label',
+                    (state.filterAssignee === member.name
+                        ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
+                        : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
+                    )
+                );
+                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'assigneeFilter', value: member.name, checked: state.filterAssignee === member.name });
+                radio.addEventListener('change', () => setState({ filterAssignee: member.name }));
+                label.appendChild(radio);
+                label.appendChild(createElement('span', ['ml-2'], {}, [member.name]));
+                assigneeSpace.appendChild(label);
+            });
+            assigneeDiv.appendChild(assigneeSpace);
+            nav.appendChild(assigneeDiv);
+
+            // 업무 카테고리 필터
+            const categoryDiv = createElement('div', ['border-b', 'border-gray-200', 'pb-4']);
+            categoryDiv.appendChild(createElement('h4', ['text-gray-700', 'font-medium', 'mb-2', 'flex', 'items-center'], {}, [createIcon(Icons.LayoutDashboard, ['w-4', 'h-4', 'mr-2']), ' 업무 카테고리']));
+            const categorySpace = createElement('div', ['space-y-1']);
+
+            const allCategoryLabel = createElement('label',
+                (state.filterCategory === ''
+                    ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
+                    : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
+                )
+            );
+            const allCategoryRadio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'categoryFilter', value: '', checked: state.filterCategory === '' });
+            allCategoryRadio.addEventListener('change', () => setState({ filterCategory: '' }));
+            allCategoryLabel.appendChild(allCategoryRadio);
+            allCategoryLabel.appendChild(createElement('span', ['ml-2'], {}, ['전체']));
+            categorySpace.appendChild(allCategoryLabel);
+
+            actualTaskCategories.forEach(category => {
+                const label = createElement('label',
+                    (state.filterCategory === category
+                        ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
+                        : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
+                    )
+                );
+                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'categoryFilter', value: category, checked: state.filterCategory === category });
+                radio.addEventListener('change', () => setState({ filterCategory: category }));
+                label.appendChild(radio);
+                label.appendChild(createElement('span', ['ml-2'], {}, [category]));
+                categorySpace.appendChild(label);
+            });
+            categoryDiv.appendChild(categorySpace);
+            nav.appendChild(categoryDiv);
+
+            // 수행 주기 필터
+            const cycleDiv = createElement('div', []);
+            cycleDiv.appendChild(createElement('h4', ['text-gray-700', 'font-medium', 'mb-2', 'flex', 'items-center'], {}, [createIcon(Icons.CalendarDays, ['w-4', 'h-4', 'mr-2']), ' 수행 주기']));
+            const cycleSpace = createElement('div', ['space-y-1']);
+
+            const allCycleLabel = createElement('label',
+                (state.filterCycle === ''
+                    ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
+                    : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
+                )
+            );
+            const allCycleRadio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'cycleFilter', value: '', checked: state.filterCycle === '' });
+            allCycleRadio.addEventListener('change', () => setState({ filterCycle: '' }));
+            allCycleLabel.appendChild(allCycleRadio);
+            allCycleLabel.appendChild(createElement('span', ['ml-2'], {}, ['전체']));
+            cycleSpace.appendChild(allCycleLabel);
+
+            baseTaskCycles.forEach(cycle => {
+                const label = createElement('label',
+                    (state.filterCycle === cycle
+                        ? ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'bg-indigo-100', 'text-indigo-700', 'font-semibold']
+                        : ['flex', 'items-center', 'text-sm', 'cursor-pointer', 'p-1', 'rounded-md', 'transition-colors', 'duration-200', 'text-gray-600', 'hover:bg-gray-100']
+                    )
+                );
+                const radio = createElement('input', ['form-radio', 'h-4', 'w-4', 'text-indigo-600', 'transition-colors', 'duration-200', 'focus:ring-indigo-500'], { type: 'radio', name: 'cycleFilter', value: cycle, checked: state.filterCycle === cycle });
+                radio.addEventListener('change', () => setState({ filterCycle: cycle }));
+                label.appendChild(radio);
+                label.appendChild(createElement('span', ['ml-2'], {}, [cycle]));
+                cycleSpace.appendChild(label);
+            });
+            cycleDiv.appendChild(cycleSpace);
+            nav.appendChild(cycleDiv);
+
+            aside.appendChild(nav);
+            return aside;
+        }
+
+        /**
+         * 스켈레톤 카드 컴포넌트를 생성합니다. (로딩 상태 표시용)
+         * @returns {HTMLElement} 스켈레톤 카드 요소
+         */
+        function createSkeletonCard() {
+            const card = createElement('div', ['bg-white', 'p-5', 'rounded-lg', 'shadow-md', 'border', 'border-gray-200', 'animate-pulse']);
+            card.appendChild(createElement('div', ['h-6', 'bg-gray-200', 'rounded', 'w-3/4', 'mb-3']));
+            card.appendChild(createElement('div', ['h-4', 'bg-gray-200', 'rounded', 'w-1/2', 'mb-2']));
+            card.appendChild(createElement('div', ['h-4', 'bg-gray-200', 'rounded', 'w-2/3', 'mb-2']));
+            card.appendChild(createElement('div', ['h-4', 'bg-gray-200', 'rounded', 'w-1/4']));
+            return card;
+        }
+
+        /**
+         * 업무 카드 컴포넌트를 생성합니다.
+         * @param {object} task - 업무 데이터 객체
+         * @returns {HTMLElement} 업무 카드 요소
+         */
+        function createTaskCard(task) {
+            const card = createElement('div', [
+                'bg-white', 'p-5', 'rounded-lg', 'shadow-md', 'hover:shadow-lg', 'transition-all', 'duration-300', 'cursor-pointer', 'border', 'border-gray-200', 'relative', 'transform', 'hover:-translate-y-1', 'hover:scale-[1.01]', 'animate-fade-in'
+            ], {
+                role: 'button',
+                tabindex: '0',
+                'aria-label': `${task.name} 상세 보기`,
+                title: `${task.name} 상세 보기`
+            });
+
+            card.addEventListener('click', () => setState({ currentPage: 'detail', selectedTask: task }));
+
+            const toggleFavoriteBtn = createElement('button', [
+                'absolute', 'top-3', 'right-3', 'text-gray-400', 'hover:text-yellow-400', 'transition-colors', 'duration-200', 'transform', 'hover:scale-110'
+            ], {
+                'aria-label': task.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가',
+                title: task.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'
+            });
+            toggleFavoriteBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+                const updatedTasks = state.tasks.map(t =>
+                    t.id === task.id ? { ...t, isFavorite: !t.isFavorite } : t
+                );
+                setState({ tasks: updatedTasks });
+            });
+
+            const starIcon = createIcon(Icons.Star, (task.isFavorite ? ['w-6', 'h-6', 'fill-yellow-400', 'text-yellow-400'] : ['w-6', 'h-6', 'text-gray-300']));
+            toggleFavoriteBtn.appendChild(starIcon);
+            card.appendChild(toggleFavoriteBtn);
+
+            card.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800', 'mb-2', 'truncate'], {}, [task.name]));
+
+            const assigneeDiv = createElement('div', ['flex', 'items-center', 'text-gray-600', 'text-sm', 'mb-1', 'truncate']);
+            assigneeDiv.appendChild(createIcon(Icons.User, ['w-4', 'h-4', 'mr-2', 'text-indigo-500']));
+            assigneeDiv.appendChild(createElement('span', [], {}, [task.assignee]));
+            card.appendChild(assigneeDiv);
+
+            const categoryDiv = createElement('div', ['flex', 'items-center', 'text-gray-600', 'text-sm', 'mb-1', 'truncate']);
+            categoryDiv.appendChild(createIcon(Icons.LayoutDashboard, ['w-4', 'h-4', 'mr-2', 'text-indigo-500']));
+            categoryDiv.appendChild(createElement('span', [], {}, [task.category]));
+            card.appendChild(categoryDiv);
+
+            const cycleDiv = createElement('div', ['flex', 'items-center', 'text-gray-600', 'text-sm']);
+            /**
+             * 수행 주기에 따라 적절한 아이콘을 반환합니다.
+             * @param {string} cycle - 업무 수행 주기 문자열
+             * @returns {SVGElement|null} 아이콘 SVG 요소 또는 null
+             */
+            const getCycleIcon = (cycle) => {
+                const baseCycle = cycle.split(' ')[0];
+                switch (baseCycle) {
+                    case '일일': return createIcon(Icons.CalendarClock, ['w-4', 'h-4', 'text-orange-400']);
+                    case '주간': return createIcon(Icons.CalendarDays, ['w-4', 'h-4', 'text-orange-400']);
+                    case '월간': return createIcon(Icons.Calendar, ['w-4', 'h-4', 'text-orange-400']);
+                    case '년간': return createIcon(Icons.CalendarCheck, ['w-4', 'h-4', 'text-orange-400']);
+                    case '발생시': return createIcon(Icons.Clock, ['w-4', 'h-4', 'text-orange-400']);
+                    default: return null;
+                }
+            };
+            cycleDiv.appendChild(getCycleIcon(task.cycle));
+            cycleDiv.appendChild(createElement('span', ['ml-2'], {}, [task.cycle]));
+            card.appendChild(cycleDiv);
+
+            return card;
+        }
+
+        /**
+         * 업무 목록 페이지를 렌더링합니다.
+         * 검색 및 필터링 조건에 따라 업무 카드를 표시합니다.
+         */
+        function renderTaskList() {
+            const mainContent = createElement('div', ['flex-1', 'overflow-auto']);
+
+            // 현재 상태에 따라 업무 필터링
+            const filteredTasks = state.tasks.filter(task => {
+                const matchesSearch = state.searchTerm === '' ||
+                    task.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+                    task.assignee.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+                    task.category.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+                    task.processSteps.some(step => step.toLowerCase().includes(state.searchTerm.toLowerCase()));
+
+                const taskBaseCycle = task.cycle.split(' ')[0];
+                const matchesCycle = state.filterCycle === '' || taskBaseCycle === state.filterCycle;
+
+                const matchesAssignee = state.filterAssignee === '' || task.assignee === state.filterAssignee;
+                const matchesCategory = state.filterCategory === '' || task.category === state.filterCategory;
+                const matchesFavorite = !state.showFavorites || task.isFavorite;
+
+                return matchesSearch && matchesCycle && matchesAssignee && matchesCategory && matchesFavorite;
+            });
+
+            // 로딩 상태 표시
+            if (state.isLoading) {
+                const skeletonGrid = createElement('div', ['grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'xl:grid-cols-4', 'gap-6', 'p-6']);
+                for (let i = 0; i < 8; i++) {
+                    skeletonGrid.appendChild(createSkeletonCard());
+                }
+                mainContent.appendChild(skeletonGrid);
+                return mainContent;
+            }
+
+            // 필터링 결과가 없을 때 메시지 표시
+            if (filteredTasks.length === 0) {
+                const noTasksDiv = createElement('div', ['text-center', 'p-8', 'text-gray-500', 'animate-fade-in']);
+                const message = state.searchTerm || state.filterAssignee || state.filterCategory || state.filterCycle || state.showFavorites
+                    ? '검색 또는 필터링 조건에 맞는 업무가 없습니다.'
+                    : '등록된 업무가 없습니다.';
+                noTasksDiv.appendChild(createElement('p', ['text-lg'], {}, [message]));
+                mainContent.appendChild(noTasksDiv);
+                return mainContent;
+            }
+
+            // 업무 목록 그리드 렌더링
+            const taskGrid = createElement('div', ['grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'xl:grid-cols-4', 'gap-6', 'p-6']);
+            filteredTasks.forEach(task => {
+                taskGrid.appendChild(createTaskCard(task));
+            });
+            mainContent.appendChild(taskGrid);
+            return mainContent;
+        }
+
+        /**
+         * 팀 개요 수정 모달을 생성합니다.
+         * @param {object} initialContent - 현재 팀 개요 데이터
+         * @returns {HTMLElement} 팀 개요 수정 모달 요소
+         */
+        function createEditTeamOverviewModal(initialContent) {
+            const modalWrapper = createElement('div', ['fixed', 'inset-0', 'flex', 'items-center', 'justify-center', 'z-50', 'p-4']);
+            const modalOverlay = createElement('div', ['absolute', 'inset-0', 'bg-gray-600', 'bg-opacity-50', 'animate-fade-in']);
+            const modalContent = createElement('div', ['bg-white', 'rounded-lg', 'shadow-xl', 'max-w-lg', 'w-full', 'mx-auto', 'transform', 'scale-95', 'animate-scale-in']);
+            modalWrapper.id = 'modal-edit-team-overview';
+
+            let editedOverview = { ...initialContent };
+
+            const header = createElement('div', ['flex', 'justify-between', 'items-center', 'p-5', 'border-b', 'border-gray-200']);
+            header.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800'], {}, ['팀 개요 수정']));
+            const closeBtn = createElement('button', ['text-gray-400', 'hover:text-gray-600', 'transition-colors', 'duration-200'], { title: '닫기' }, [createIcon(Icons.X, ['w-6', 'h-6'])]);
+            closeBtn.addEventListener('click', () => setState({ showEditTeamOverviewModal: false }));
+            header.appendChild(closeBtn);
+            modalContent.appendChild(header);
+
+            const form = createElement('form', ['p-6', 'space-y-4']);
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                setState({ teamOverview: editedOverview, showEditTeamOverviewModal: false });
+            });
+
+            const titleDiv = createElement('div');
+            titleDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'teamOverviewTitle' }, ['제목']));
+            const titleInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                type: 'text', id: 'teamOverviewTitle', name: 'title', value: editedOverview.title, required: true
+            });
+            titleInput.addEventListener('input', (e) => editedOverview.title = e.target.value);
+            titleDiv.appendChild(titleInput);
+            form.appendChild(titleDiv);
+
+            const contentDiv = createElement('div');
+            contentDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'teamOverviewContent' }, ['내용']));
+            const contentTextarea = createElement('textarea', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                id: 'teamOverviewContent', name: 'content', rows: '5', required: true
+            }, [editedOverview.content]);
+            contentTextarea.addEventListener('input', (e) => editedOverview.content = e.target.value);
+            contentDiv.appendChild(contentTextarea);
+            form.appendChild(contentDiv);
+
+            const buttonGroup = createElement('div', ['flex', 'justify-end', 'space-x-3', 'mt-6']);
+            const cancelBtn = createElement('button', ['px-5', 'py-2', 'bg-gray-200', 'text-gray-800', 'rounded-md', 'hover:bg-gray-300', 'transition-colors', 'duration-200'], { type: 'button' }, ['취소']);
+            cancelBtn.addEventListener('click', () => setState({ showEditTeamOverviewModal: false }));
+            buttonGroup.appendChild(cancelBtn);
+            const saveBtn = createElement('button', ['px-5', 'py-2', 'bg-indigo-600', 'text-white', 'rounded-md', 'hover:bg-indigo-700', 'transition-colors', 'duration-200', 'shadow-md', 'hover:shadow-lg'], { type: 'submit' }, ['저장']);
+            buttonGroup.appendChild(saveBtn);
+            form.appendChild(buttonGroup);
+
+            modalContent.appendChild(form);
+            modalWrapper.appendChild(modalOverlay);
+            modalWrapper.appendChild(modalContent);
+
+            return modalWrapper;
+        }
+
+        /**
+         * 공지사항 추가/수정 모달을 생성합니다.
+         * @param {object} [initialAnnouncement] - 수정할 공지사항 데이터 (새 공지일 경우 null)
+         * @returns {HTMLElement} 공지사항 폼 모달 요소
+         */
+        function createAnnouncementFormModal(initialAnnouncement) {
+            const modalWrapper = createElement('div', ['fixed', 'inset-0', 'flex', 'items-center', 'justify-center', 'z-50', 'p-4']);
+            const modalOverlay = createElement('div', ['absolute', 'inset-0', 'bg-gray-600', 'bg-opacity-50', 'animate-fade-in']);
+            const modalContent = createElement('div', ['bg-white', 'rounded-lg', 'shadow-xl', 'max-w-lg', 'w-full', 'mx-auto', 'transform', 'scale-95', 'animate-scale-in']);
+            modalWrapper.id = 'modal-announcement-form';
+
+            let announcement = initialAnnouncement ? { ...initialAnnouncement } : { title: '', content: '', date: new Date().toISOString().slice(0, 10) };
+
+            const modalTitle = initialAnnouncement ? '공지 수정' : '새 공지 작성';
+            const header = createElement('div', ['flex', 'justify-between', 'items-center', 'p-5', 'border-b', 'border-gray-200']);
+            header.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800'], {}, [modalTitle]));
+            const closeBtn = createElement('button', ['text-gray-400', 'hover:text-gray-600', 'transition-colors', 'duration-200'], { title: '닫기' }, [createIcon(Icons.X, ['w-6', 'h-6'])]);
+            closeBtn.addEventListener('click', () => setState({ showAnnouncementFormModal: false, announcementToEdit: null }));
+            header.appendChild(closeBtn);
+            modalContent.appendChild(header);
+
+            const form = createElement('form', ['p-6', 'space-y-4']);
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const updatedAnnouncements = initialAnnouncement
+                    ? state.announcements.map(ann => ann.id === announcement.id ? announcement : ann)
+                    : [...state.announcements, { ...announcement, id: `ann-${Date.now()}` }];
+                setState({ announcements: updatedAnnouncements, showAnnouncementFormModal: false, announcementToEdit: null });
+            });
+
+            const titleDiv = createElement('div');
+            titleDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'announcementTitle' }, ['제목']));
+            const titleInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400'], {
+                type: 'text', id: 'announcementTitle', name: 'title', value: announcement.title, required: true
+            });
+            titleInput.addEventListener('input', (e) => announcement.title = e.target.value);
+            titleDiv.appendChild(titleInput);
+            form.appendChild(titleDiv);
+
+            const contentDiv = createElement('div');
+            contentDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'announcementContent' }, ['내용']));
+            const contentTextarea = createElement('textarea', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400'], {
+                id: 'announcementContent', name: 'content', rows: '3', required: true
+            }, [announcement.content]);
+            contentTextarea.addEventListener('input', (e) => announcement.content = e.target.value);
+            contentDiv.appendChild(contentTextarea);
+            form.appendChild(contentDiv);
+
+            const dateDiv = createElement('div');
+            dateDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'announcementDate' }, ['날짜']));
+            const dateInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400'], {
+                type: 'date', id: 'announcementDate', name: 'date', value: announcement.date, required: true
+            });
+            dateInput.addEventListener('input', (e) => announcement.date = e.target.value);
+            dateDiv.appendChild(dateInput);
+            form.appendChild(dateDiv);
+
+            const buttonGroup = createElement('div', ['flex', 'justify-end', 'space-x-3', 'mt-6']);
+            if (initialAnnouncement) {
+                const deleteBtn = createElement('button', ['px-5', 'py-2', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'transition-colors', 'duration-200', 'shadow-md', 'hover:shadow-lg', 'flex', 'items-center'], { type: 'button', title: '공지 삭제' }, [createIcon(Icons.Trash2, ['w-4', 'h-4', 'mr-1']), ' 삭제']);
+                deleteBtn.addEventListener('click', () => {
+                    // 사용자 정의 확인 모달 사용
+                    setState({
+                        showConfirmationModal: true,
+                        confirmationModalMessage: '정말로 이 공지를 삭제하시겠습니까?',
+                        confirmationModalCallback: () => {
+                            const updatedAnnouncements = state.announcements.filter(ann => ann.id !== announcement.id);
+                            setState({ announcements: updatedAnnouncements, showAnnouncementFormModal: false, announcementToEdit: null, showConfirmationModal: false });
+                        }
+                    });
+                });
+                buttonGroup.appendChild(deleteBtn);
+            }
+            const cancelBtn = createElement('button', ['px-5', 'py-2', 'bg-gray-200', 'text-gray-800', 'rounded-md', 'hover:bg-gray-300', 'transition-colors', 'duration-200'], { type: 'button' }, ['취소']);
+            cancelBtn.addEventListener('click', () => setState({ showAnnouncementFormModal: false, announcementToEdit: null }));
+            buttonGroup.appendChild(cancelBtn);
+            const saveBtn = createElement('button', ['px-5', 'py-2', 'bg-indigo-600', 'text-white', 'rounded-md', 'hover:bg-indigo-700', 'transition-colors', 'duration-200', 'shadow-md', 'hover:shadow-lg'], { type: 'submit' }, ['저장']);
+            buttonGroup.appendChild(saveBtn);
+            form.appendChild(buttonGroup);
+
+            modalContent.appendChild(form);
+            modalWrapper.appendChild(modalOverlay);
+            modalWrapper.appendChild(modalContent);
+
+            return modalWrapper;
+        }
+
+        /**
+         * 빠른 링크 추가/수정 모달을 생성합니다.
+         * @param {object} [initialLink] - 수정할 빠른 링크 데이터 (새 링크일 경우 null)
+         * @returns {HTMLElement} 빠른 링크 폼 모달 요소
+         */
+        function createQuickLinkFormModal(initialLink) {
+            const modalWrapper = createElement('div', ['fixed', 'inset-0', 'flex', 'items-center', 'justify-center', 'z-50', 'p-4']);
+            const modalOverlay = createElement('div', ['absolute', 'inset-0', 'bg-gray-600', 'bg-opacity-50', 'animate-fade-in']);
+            const modalContent = createElement('div', ['bg-white', 'rounded-lg', 'shadow-xl', 'max-w-lg', 'w-full', 'mx-auto', 'transform', 'scale-95', 'animate-scale-in']);
+            modalWrapper.id = 'modal-quicklink-form';
+
+            let link = initialLink ? { ...initialLink } : { name: '', url: '', description: '' };
+
+            const modalTitle = initialLink ? '빠른 링크 수정' : '새 빠른 링크 추가';
+            const header = createElement('div', ['flex', 'justify-between', 'items-center', 'p-5', 'border-b', 'border-gray-200']);
+            header.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800'], {}, [modalTitle]));
+            const closeBtn = createElement('button', ['text-gray-400', 'hover:text-gray-600', 'transition-colors', 'duration-200'], { title: '닫기' }, [createIcon(Icons.X, ['w-6', 'h-6'])]);
+            closeBtn.addEventListener('click', () => setState({ showQuickLinkFormModal: false, quickLinkToEdit: null }));
+            header.appendChild(closeBtn);
+            modalContent.appendChild(header);
+
+            const form = createElement('form', ['p-6', 'space-y-4']);
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const updatedQuickLinks = initialLink
+                    ? state.quickLinks.map(l => l.id === link.id ? link : l)
+                    : [...state.quickLinks, { ...link, id: `link-${Date.now()}` }];
+                setState({ quickLinks: updatedQuickLinks, showQuickLinkFormModal: false, quickLinkToEdit: null });
+            });
+
+            const nameDiv = createElement('div');
+            nameDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'linkName' }, ['링크 이름']));
+            const nameInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400'], {
+                type: 'text', id: 'linkName', name: 'name', value: link.name, required: true
+            });
+            nameInput.addEventListener('input', (e) => link.name = e.target.value);
+            nameDiv.appendChild(nameInput);
+            form.appendChild(nameDiv);
+
+            const urlDiv = createElement('div');
+            urlDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'linkUrl' }, ['URL']));
+            const urlInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400'], {
+                type: 'url', id: 'linkUrl', name: 'url', value: link.url, required: true
+            });
+            urlInput.addEventListener('input', (e) => link.url = e.target.value);
+            urlDiv.appendChild(urlInput);
+            form.appendChild(urlDiv);
+
+            const descriptionDiv = createElement('div');
+            descriptionDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'linkDescription' }, ['설명 (선택 사항)']));
+            const descriptionInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400'], {
+                type: 'text', id: 'linkDescription', name: 'description', value: link.description
+            });
+            descriptionInput.addEventListener('input', (e) => link.description = e.target.value);
+            descriptionDiv.appendChild(descriptionInput);
+            form.appendChild(descriptionDiv);
+
+            const buttonGroup = createElement('div', ['flex', 'justify-end', 'space-x-3', 'mt-6']);
+            if (initialLink) {
+                const deleteBtn = createElement('button', ['px-5', 'py-2', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'transition-colors', 'duration-200', 'shadow-md', 'hover:shadow-lg', 'flex', 'items-center'], { type: 'button', title: '링크 삭제' }, [createIcon(Icons.Trash2, ['w-4', 'h-4', 'mr-1']), ' 삭제']);
+                deleteBtn.addEventListener('click', () => {
+                    // 사용자 정의 확인 모달 사용
+                    setState({
+                        showConfirmationModal: true,
+                        confirmationModalMessage: '정말로 이 링크를 삭제하시겠습니까?',
+                        confirmationModalCallback: () => {
+                            const updatedQuickLinks = state.quickLinks.filter(l => l.id !== link.id);
+                            setState({ quickLinks: updatedQuickLinks, showQuickLinkFormModal: false, quickLinkToEdit: null, showConfirmationModal: false });
+                        }
+                    });
+                });
+                buttonGroup.appendChild(deleteBtn);
+            }
+            const cancelBtn = createElement('button', ['px-5', 'py-2', 'bg-gray-200', 'text-gray-800', 'rounded-md', 'hover:bg-gray-300', 'transition-colors', 'duration-200'], { type: 'button' }, ['취소']);
+            cancelBtn.addEventListener('click', () => setState({ showQuickLinkFormModal: false, quickLinkToEdit: null }));
+            buttonGroup.appendChild(cancelBtn);
+            const saveBtn = createElement('button', ['px-5', 'py-2', 'bg-indigo-600', 'text-white', 'rounded-md', 'hover:bg-indigo-700', 'transition-colors', 'duration-200', 'shadow-md', 'hover:shadow-lg'], { type: 'submit' }, ['저장']);
+            buttonGroup.appendChild(saveBtn);
+            form.appendChild(buttonGroup);
+
+            modalContent.appendChild(form);
+            modalWrapper.appendChild(modalOverlay);
+            modalWrapper.appendChild(modalContent);
+
+            return modalWrapper;
+        }
+
+        /**
+         * 대시보드 페이지를 렌더링합니다.
+         * 팀 개요, 팀원별 업무 카드, 공지사항, 빠른 링크 섹션을 포함합니다.
+         */
+        function renderDashboardPage() {
+            const dashboardDiv = createElement('div', ['p-6', 'bg-gray-50', 'min-h-screen', 'rounded-lg', 'animate-fade-in']);
+
+            // 로딩 상태 스켈레톤 UI
+            if (state.isLoading) {
+                dashboardDiv.appendChild(createElement('div', ['h-10', 'bg-gray-200', 'rounded', 'w-1/4', 'mb-6']));
+                const overviewSkeleton = createElement('div', ['mb-8', 'p-6', 'bg-white', 'rounded-lg', 'shadow-md']);
+                overviewSkeleton.appendChild(createElement('div', ['h-8', 'bg-gray-200', 'rounded', 'w-1/3', 'mb-4']));
+                overviewSkeleton.appendChild(createElement('div', ['h-4', 'bg-gray-200', 'rounded', 'w-full', 'mb-2']));
+                overviewSkeleton.appendChild(createElement('div', ['h-4', 'bg-gray-200', 'rounded', 'w-5/6']));
+                dashboardDiv.appendChild(overviewSkeleton);
+
+                const memberSkeletonSection = createElement('div', ['mb-8']);
+                memberSkeletonSection.appendChild(createElement('div', ['h-8', 'bg-gray-200', 'rounded', 'w-1/3', 'mb-4']));
+                const memberGrid = createElement('div', ['grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-4', 'gap-6']);
+                for (let i = 0; i < 4; i++) {
+                    memberGrid.appendChild(createSkeletonCard());
+                }
+                memberSkeletonSection.appendChild(memberGrid);
+                dashboardDiv.appendChild(memberSkeletonSection);
+
+                const announcementSkeletonSection = createElement('div', []);
+                announcementSkeletonSection.appendChild(createElement('div', ['h-8', 'bg-gray-200', 'rounded', 'w-1/3', 'mb-4']));
+                const announcementGrid = createElement('div', ['grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-6']);
+                for (let i = 0; i < 4; i++) {
+                    announcementGrid.appendChild(createSkeletonCard());
+                }
+                announcementSkeletonSection.appendChild(announcementGrid);
+                dashboardDiv.appendChild(announcementSkeletonSection);
+
+                return dashboardDiv;
+            }
+
+            dashboardDiv.appendChild(createElement('h2', ['text-3xl', 'font-bold', 'text-gray-800', 'mb-6'], {}, ['메인 대시보드']));
+
+            // 팀 개요 섹션
+            const teamOverviewSection = createElement('section', ['mb-8', 'p-6', 'bg-white', 'rounded-lg', 'shadow-md', 'transition-all', 'duration-300', 'hover:shadow-lg']);
+            const teamOverviewHeader = createElement('div', ['flex', 'justify-between', 'items-center', 'mb-4']);
+            teamOverviewHeader.appendChild(createElement('h3', ['text-2xl', 'font-semibold', 'text-gray-800', 'flex', 'items-center'], {}, [createIcon(Icons.Users, ['w-6', 'h-6', 'mr-2', 'text-indigo-600']), ` ${state.teamOverview.title}`]));
+            const editOverviewBtn = createElement('button', ['p-2', 'rounded-full', 'text-gray-400', 'hover:text-indigo-500', 'transition-colors', 'duration-200', 'transform', 'hover:scale-110'], { title: '팀 개요 수정' }, [createIcon(Icons.Edit, ['w-5', 'h-5'])]);
+            editOverviewBtn.addEventListener('click', () => setState({ showEditTeamOverviewModal: true }));
+            teamOverviewHeader.appendChild(editOverviewBtn);
+            teamOverviewSection.appendChild(teamOverviewHeader);
+            teamOverviewSection.appendChild(createElement('p', ['text-gray-700', 'leading-relaxed'], {}, [state.teamOverview.content]));
+            dashboardDiv.appendChild(teamOverviewSection);
+
+            // 팀원별 업무 카드 섹션
+            const teamMembersSection = createElement('section', ['mb-8']);
+            teamMembersSection.appendChild(createElement('h3', ['text-2xl', 'font-semibold', 'text-gray-800', 'mb-4', 'flex', 'items-center'], {}, [createIcon(Icons.User, ['w-6', 'h-6', 'mr-2', 'text-indigo-600']), ' 담당자별 업무 카드']));
+            const memberGrid = createElement('div', ['grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-4', 'gap-6']);
+            teamMembers.forEach(member => {
+                const memberCard = createElement('div', [
+                    'bg-white', 'p-6', 'rounded-lg', 'shadow-md', 'border', 'border-gray-200', 'hover:shadow-lg', 'transition-all', 'duration-300', 'cursor-pointer', 'transform', 'hover:-translate-y-1', 'hover:scale-[1.01]'
+                ], {
+                    role: 'button', tabindex: '0', 'aria-label': `${member.name}의 업무 보기`, title: `${member.name}의 업무 보기`
+                });
+                memberCard.addEventListener('click', () => {
+                    setState({ currentPage: 'all-tasks', filterAssignee: member.name });
+                });
+                memberCard.appendChild(createElement('h4', ['text-xl', 'font-semibold', 'text-indigo-700', 'mb-2'], {}, [member.name]));
+                memberCard.appendChild(createElement('p', ['text-gray-700', 'text-sm'], {}, [member.roles]));
+                const viewTasksBtn = createElement('button', ['mt-4', 'text-indigo-600', 'hover:text-indigo-800', 'text-sm', 'font-medium', 'flex', 'items-center', 'transition-colors', 'duration-200'], { title: `${member.name}의 상세 업무 보기` }, [
+                    '업무 상세 보기 ', createIcon(Icons.ChevronRight, ['w-4', 'h-4', 'ml-1'])
+                ]);
+                viewTasksBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+                    setState({ currentPage: 'all-tasks', filterAssignee: member.name });
+                });
+                memberCard.appendChild(viewTasksBtn);
+                memberGrid.appendChild(memberCard);
+            });
+            teamMembersSection.appendChild(memberGrid);
+            dashboardDiv.appendChild(teamMembersSection);
+
+            // 공지사항 섹션
+            const announcementsSection = createElement('section', ['mb-8', 'p-6', 'bg-white', 'rounded-lg', 'shadow-md', 'transition-all', 'duration-300', 'hover:shadow-lg']);
+            const announcementsHeader = createElement('div', ['flex', 'justify-between', 'items-center', 'mb-4']);
+            announcementsHeader.appendChild(createElement('h3', ['text-2xl', 'font-semibold', 'text-gray-800', 'flex', 'items-center'], {}, [createIcon(Icons.BellRing, ['w-6', 'h-6', 'mr-2', 'text-indigo-600']), ' 공지사항']));
+            const addAnnouncementBtn = createElement('button', ['px-3', 'py-1', 'bg-pink-500', 'text-white', 'rounded-md', 'hover:bg-pink-600', 'transition-all', 'duration-300', 'text-sm', 'flex', 'items-center', 'shadow-md', 'hover:shadow-lg'], { title: '새 공지 작성' }, [createIcon(Icons.PlusCircle, ['w-4', 'h-4', 'mr-1']), ' 새 공지']);
+            addAnnouncementBtn.addEventListener('click', () => setState({ showAnnouncementFormModal: true, announcementToEdit: null }));
+            announcementsHeader.appendChild(addAnnouncementBtn);
+            announcementsSection.appendChild(announcementsHeader);
+
+            if (state.announcements.length > 0) {
+                const ul = createElement('ul', ['space-y-3']);
+                state.announcements.forEach(ann => {
+                    const li = createElement('li', ['flex', 'justify-between', 'items-start', 'bg-gray-50', 'p-3', 'rounded-md', 'border', 'border-gray-100', 'shadow-sm', 'animate-fade-in-up']);
+                    const div = createElement('div');
+                    div.appendChild(createElement('h4', ['font-semibold', 'text-gray-800', 'truncate'], {}, [ann.title]));
+                    div.appendChild(createElement('p', ['text-gray-600', 'text-sm', 'truncate'], {}, [ann.content]));
+                    div.appendChild(createElement('span', ['text-gray-500', 'text-xs'], {}, [ann.date]));
+                    li.appendChild(div);
+
+                    const actionsDiv = createElement('div', ['flex', 'space-x-2', 'ml-4', 'flex-shrink-0']);
+                    const editAnnBtn = createElement('button', ['p-1', 'rounded-full', 'text-gray-400', 'hover:text-indigo-500', 'transition-colors', 'duration-200'], { title: '공지 수정' }, [createIcon(Icons.Edit, ['w-4', 'h-4'])]);
+                    editAnnBtn.addEventListener('click', () => setState({ showAnnouncementFormModal: true, announcementToEdit: ann }));
+                    actionsDiv.appendChild(editAnnBtn);
+
+                    const deleteAnnBtn = createElement('button', ['p-1', 'rounded-full', 'text-gray-400', 'hover:text-red-500', 'transition-colors', 'duration-200'], { title: '공지 삭제' }, [createIcon(Icons.Trash2, ['w-4', 'h-4'])]);
+                    deleteAnnBtn.addEventListener('click', () => {
+                        // 사용자 정의 확인 모달 사용
+                        setState({
+                            showConfirmationModal: true,
+                            confirmationModalMessage: '정말로 이 공지를 삭제하시겠습니까?',
+                            confirmationModalCallback: () => {
+                                const updatedAnnouncements = state.announcements.filter(a => a.id !== ann.id);
+                                setState({ announcements: updatedAnnouncements, showConfirmationModal: false });
+                            }
+                        });
+                    });
+                    actionsDiv.appendChild(deleteAnnBtn);
+                    li.appendChild(actionsDiv);
+                    ul.appendChild(li);
+                });
+                announcementsSection.appendChild(ul);
+            } else {
+                announcementsSection.appendChild(createElement('p', ['text-gray-500', 'text-sm'], {}, ['등록된 공지사항이 없습니다.']));
+            }
+            dashboardDiv.appendChild(announcementsSection);
+
+            // 빠른 링크 섹션
+            const quickLinksSection = createElement('section', ['p-6', 'bg-white', 'rounded-lg', 'shadow-md', 'transition-all', 'duration-300', 'hover:shadow-lg']);
+            const quickLinksHeader = createElement('div', ['flex', 'justify-between', 'items-center', 'mb-4']);
+            quickLinksHeader.appendChild(createElement('h3', ['text-2xl', 'font-semibold', 'text-gray-800', 'flex', 'items-center'], {}, [createIcon(Icons.Link, ['w-6', 'h-6', 'mr-2', 'text-indigo-600']), ' 빠른 링크']));
+            const addQuickLinkBtn = createElement('button', ['px-3', 'py-1', 'bg-pink-500', 'text-white', 'rounded-md', 'hover:bg-pink-600', 'transition-all', 'duration-300', 'text-sm', 'flex', 'items-center', 'shadow-md', 'hover:shadow-lg'], { title: '새 빠른 링크 추가' }, [createIcon(Icons.PlusCircle, ['w-4', 'h-4', 'mr-1']), ' 새 링크']);
+            addQuickLinkBtn.addEventListener('click', () => setState({ showQuickLinkFormModal: true, quickLinkToEdit: null }));
+            quickLinksHeader.appendChild(addQuickLinkBtn);
+            quickLinksSection.appendChild(quickLinksHeader);
+
+            if (state.quickLinks.length > 0) {
+                const ul = createElement('ul', ['space-y-3']);
+                state.quickLinks.forEach(link => {
+                    const li = createElement('li', ['flex', 'justify-between', 'items-start', 'bg-gray-50', 'p-3', 'rounded-md', 'border', 'border-gray-100', 'shadow-sm', 'animate-fade-in-up']);
+                    const div = createElement('div');
+                    const linkAnchor = createElement('a', ['font-semibold', 'text-indigo-700', 'hover:underline', 'truncate', 'block'], { href: link.url, target: '_blank', rel: 'noopener noreferrer', title: link.name }, [link.name]);
+                    div.appendChild(linkAnchor);
+                    div.appendChild(createElement('p', ['text-gray-600', 'text-sm', 'truncate'], {}, [link.description || '설명 없음']));
+                    li.appendChild(div);
+
+                    const actionsDiv = createElement('div', ['flex', 'space-x-2', 'ml-4', 'flex-shrink-0']);
+                    const editLinkBtn = createElement('button', ['p-1', 'rounded-full', 'text-gray-400', 'hover:text-indigo-500', 'transition-colors', 'duration-200'], { title: '링크 수정' }, [createIcon(Icons.Edit, ['w-4', 'h-4'])]);
+                    editLinkBtn.addEventListener('click', () => setState({ showQuickLinkFormModal: true, quickLinkToEdit: link }));
+                    actionsDiv.appendChild(editLinkBtn);
+
+                    const deleteLinkBtn = createElement('button', ['p-1', 'rounded-full', 'text-gray-400', 'hover:text-red-500', 'transition-colors', 'duration-200'], { title: '링크 삭제' }, [createIcon(Icons.Trash2, ['w-4', 'h-4'])]);
+                    deleteLinkBtn.addEventListener('click', () => {
+                        // 사용자 정의 확인 모달 사용
+                        setState({
+                            showConfirmationModal: true,
+                            confirmationModalMessage: '정말로 이 링크를 삭제하시겠습니까?',
+                            confirmationModalCallback: () => {
+                                const updatedQuickLinks = state.quickLinks.filter(l => l.id !== link.id);
+                                setState({ quickLinks: updatedQuickLinks, showQuickLinkFormModal: false, quickLinkToEdit: null, showConfirmationModal: false });
+                            }
+                        });
+                    });
+                    actionsDiv.appendChild(deleteLinkBtn);
+                    li.appendChild(actionsDiv);
+                    ul.appendChild(li);
+                });
+                quickLinksSection.appendChild(ul);
+            } else {
+                quickLinksSection.appendChild(createElement('p', ['text-gray-500', 'text-sm'], {}, ['등록된 빠른 링크가 없습니다.']));
+            }
+            dashboardDiv.appendChild(quickLinksSection);
+
+            return dashboardDiv;
+        }
+
+        /**
+         * 활성 필터 칩 컴포넌트를 렌더링합니다.
+         * 현재 적용된 필터 조건을 시각적으로 표시하고 해제할 수 있도록 합니다.
+         */
+        function renderFilterChips() {
+            const activeFilters = [];
+            if (state.searchTerm) activeFilters.push({ type: '검색', value: state.searchTerm, clear: () => setState({ searchTerm: '' }) });
+            if (state.filterAssignee) activeFilters.push({ type: '담당자', value: state.filterAssignee, clear: () => setState({ filterAssignee: '' }) });
+            if (state.filterCategory) activeFilters.push({ type: '카테고리', value: state.filterCategory, clear: () => setState({ filterCategory: '' }) });
+            if (state.filterCycle) activeFilters.push({ type: '주기', value: state.filterCycle, clear: () => setState({ filterCycle: '' }) });
+            if (state.showFavorites) activeFilters.push({ type: '즐겨찾기', value: '활성화', clear: () => setState({ showFavorites: false }) });
+
+            if (activeFilters.length === 0) {
+                return null;
+            }
+
+            const chipsContainer = createElement('div', ['flex', 'flex-wrap', 'gap-2', 'p-4', 'bg-gray-100', 'rounded-lg', 'shadow-inner', 'mb-4', 'animate-fade-in']);
+            chipsContainer.appendChild(createElement('span', ['text-gray-700', 'font-semibold', 'text-sm', 'mr-2'], {}, ['활성 필터:']));
+
+            activeFilters.forEach((filter, index) => {
+                const chip = createElement('div', [
+                    'flex', 'items-center', 'bg-indigo-100', 'text-indigo-700', 'px-3', 'py-1', 'rounded-full', 'text-sm', 'font-medium', 'shadow-sm', 'transition-all', 'duration-200', 'hover:bg-indigo-200', 'cursor-pointer'
+                ], {
+                    title: `${filter.type}: ${filter.value} (클릭하여 해제)`
+                });
+                chip.addEventListener('click', filter.clear); // 칩 클릭 시 필터 해제
+                chip.appendChild(document.createTextNode(`${filter.type}: ${filter.value}`));
+                const clearBtn = createElement('button', ['ml-2', 'text-indigo-500', 'hover:text-indigo-700', 'transition-colors', 'duration-200'], { title: `${filter.type} 필터 해제` }, [createIcon(Icons.X, ['w-4', 'h-4'])]);
+                clearBtn.addEventListener('click', filter.clear);
+                chip.appendChild(clearBtn);
+                chipsContainer.appendChild(chip);
+            });
+
+            return chipsContainer;
+        }
+
+        /**
+         * 업무 추가/수정 모달을 생성합니다.
+         * @param {object} [initialTask] - 수정할 업무 데이터 (새 업무일 경우 null)
+         * @returns {HTMLElement} 업무 폼 모달 요소
+         */
+        function createTaskFormModal(initialTask) {
+            const modalWrapper = createElement('div', ['fixed', 'inset-0', 'flex', 'items-center', 'justify-center', 'z-50', 'p-4']);
+            const modalOverlay = createElement('div', ['absolute', 'inset-0', 'bg-gray-600', 'bg-opacity-50', 'animate-fade-in']);
+            const modalContent = createElement('div', ['bg-white', 'rounded-lg', 'shadow-xl', 'max-w-2xl', 'w-full', 'mx-auto', 'transform', 'scale-95', 'animate-scale-in', 'overflow-y-auto', 'max-h-[90vh]']);
+            modalWrapper.id = 'modal-task-form';
+
+            let task = initialTask ? JSON.parse(JSON.stringify(initialTask)) : {
+                name: '', category: '', assignee: '', processSteps: [''], cycle: '일일', deliverables: [''], fileLink: '', fileLocation: '', notes: '', isFavorite: false,
+            };
+
+            let selectedBaseCycle = task.cycle.split(' ')[0];
+            let cycleFrequency = '';
+            if (selectedBaseCycle !== '발생시') {
+                const parts = task.cycle.split(' ');
+                cycleFrequency = parts.length > 1 && parts[1].endsWith('회') ? parts[1].replace('회', '') : '';
+            }
+
+            const modalTitle = initialTask ? `업무 수정: ${initialTask.name}` : '새 업무 추가';
+            const header = createElement('div', ['flex', 'justify-between', 'items-center', 'p-5', 'border-b', 'border-gray-200']);
+            header.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800'], {}, [modalTitle]));
+            const closeBtn = createElement('button', ['text-gray-400', 'hover:text-gray-600', 'transition-colors', 'duration-200'], { title: '닫기' }, [createIcon(Icons.X, ['w-6', 'h-6'])]);
+            closeBtn.addEventListener('click', () => setState({ showTaskFormModal: false, taskToEdit: null }));
+            header.appendChild(closeBtn);
+            modalContent.appendChild(header);
+
+            const form = createElement('form', ['p-6', 'space-y-4']);
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                let finalCycle = selectedBaseCycle;
+                if (selectedBaseCycle !== '발생시' && cycleFrequency) {
+                    finalCycle = `${selectedBaseCycle} ${cycleFrequency}회`;
+                }
+                task.cycle = finalCycle;
+
+                if (initialTask) {
+                    setStateWithDB({ updateTask: task, showTaskFormModal: false, taskToEdit: null });
+                } else {
+                    setStateWithDB({ addTask: task, showTaskFormModal: false, taskToEdit: null });
+                }
+            });
+
+            /**
+             * 폼의 동적 필드 (프로세스 단계, 수행 주기 횟수 입력)를 업데이트합니다.
+             * 상태 변경 시 호출되어 UI를 동기화합니다.
+             */
+            const updateFormFields = () => {
+                // 프로세스 단계 다시 렌더링
+                const processStepsContainer = form.querySelector('#processStepsContainer');
+                if (processStepsContainer) {
+                    processStepsContainer.innerHTML = ''; // 기존 단계 지우기
+                    task.processSteps.forEach((step, index) => {
+                        const stepDiv = createElement('div', ['flex', 'items-center', 'space-x-2', 'mb-2']);
+                        const stepInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                            type: 'text', value: step, required: index === 0, placeholder: `단계 ${index + 1}`
+                        });
+                        stepInput.addEventListener('input', (e) => {
+                            task.processSteps[index] = e.target.value;
+                        });
+                        stepDiv.appendChild(stepInput);
+                        if (task.processSteps.length > 1) {
+                            const removeBtn = createElement('button', ['p-2', 'text-red-500', 'hover:text-red-700', 'transition-colors', 'duration-200'], { type: 'button', title: '단계 삭제' }, [createIcon(Icons.X, ['w-5', 'h-5'])]);
+                            removeBtn.addEventListener('click', () => {
+                                task.processSteps = task.processSteps.filter((_, i) => i !== index);
+                                updateFormFields(); // 제거 후 단계 다시 렌더링
+                            });
+                            stepDiv.appendChild(removeBtn);
+                        }
+                        processStepsContainer.appendChild(stepDiv);
+                    });
+                }
+
+                // 수행 주기 횟수 입력 필드 가시성 제어
+                const cycleFreqContainer = form.querySelector('#cycleFrequencyContainer');
+                const cycleFreqInput = form.querySelector('#cycleFrequency');
+
+                if (selectedBaseCycle !== '발생시') {
+                    if (cycleFreqContainer) {
+                        cycleFreqContainer.style.display = 'flex';
+                        if (cycleFreqInput) cycleFreqInput.required = true; // 발생시가 아니면 필수
+                    } else {
+                        // 컨테이너가 없으면 새로 생성 (초기 렌더링 시)
+                        const newContainer = createElement('div', ['flex', 'items-center', 'w-1/2'], { id: 'cycleFrequencyContainer' });
+                        const newInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                            type: 'number', min: '1', placeholder: '횟수', id: 'cycleFrequency', required: true
+                        });
+                        newInput.value = cycleFrequency;
+                        newInput.addEventListener('input', (e) => { cycleFrequency = e.target.value; });
+                        newContainer.appendChild(newInput);
+                        newContainer.appendChild(createElement('span', ['ml-2', 'text-gray-700'], {}, ['회']));
+                        form.querySelector('#cycleBase').parentNode.parentNode.appendChild(newContainer); // select 요소 다음에 추가
+                    }
+                } else {
+                    if (cycleFreqContainer) {
+                        cycleFreqContainer.style.display = 'none';
+                        if (cycleFreqInput) cycleFreqInput.required = false; // 발생시면 필수 아님
+                        cycleFrequency = ''; // 발생시에는 횟수 초기화
+                    }
+                }
+                if (cycleFreqInput) cycleFreqInput.value = cycleFrequency; // 값 동기화
+            };
+
+
+            // 업무명
+            const nameDiv = createElement('div');
+            nameDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'name' }, ['업무명']));
+            const nameInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                type: 'text', id: 'name', name: 'name', value: task.name, required: true
+            });
+            nameInput.addEventListener('input', (e) => task.name = e.target.value);
+            nameDiv.appendChild(nameInput);
+            form.appendChild(nameDiv);
+
+            // 담당자
+            const assigneeDiv = createElement('div');
+            assigneeDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'assignee' }, ['담당자']));
+            const assigneeSelect = createElement('select', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                id: 'assignee', name: 'assignee', required: true
+            });
+            assigneeSelect.appendChild(createElement('option', { value: '' }, {}, ['담당자 선택']));
+            teamMembers.forEach(member => {
+                const option = createElement('option', { value: member.name }, {}, [member.name]);
+                if (task.assignee === member.name) option.selected = true;
+                assigneeSelect.appendChild(option);
+            });
+            assigneeSelect.addEventListener('change', (e) => task.assignee = e.target.value);
+            assigneeDiv.appendChild(assigneeSelect);
+            form.appendChild(assigneeDiv);
+
+            // 카테고리
+            const categoryDiv = createElement('div');
+            categoryDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'category' }, ['업무 카테고리']));
+            const categorySelect = createElement('select', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                id: 'category', name: 'category', required: true
+            });
+            categorySelect.appendChild(createElement('option', { value: '' }, {}, ['카테고리 선택']));
+            actualTaskCategories.forEach(category => {
+                const option = createElement('option', { value: category }, {}, [category]);
+                if (task.category === category) option.selected = true;
+                categorySelect.appendChild(option);
+            });
+            categorySelect.addEventListener('change', (e) => task.category = e.target.value);
+            categoryDiv.appendChild(categorySelect);
+            form.appendChild(categoryDiv);
+
+            // 수행 주기
+            const cycleDiv = createElement('div');
+            cycleDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], {}, ['수행 주기']));
+            const cycleFlex = createElement('div', ['flex', 'space-x-2']);
+            const cycleBaseSelect = createElement('select', ['w-1/2', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], { id: 'cycleBase', required: true });
+            baseTaskCycles.forEach(cycle => {
+                const option = createElement('option', { value: cycle }, {}, [cycle]);
+                if (selectedBaseCycle === cycle) option.selected = true;
+                cycleBaseSelect.appendChild(option);
+            });
+            cycleBaseSelect.addEventListener('change', (e) => {
+                selectedBaseCycle = e.target.value;
+                updateFormFields(); // 횟수 입력 필드 가시성 업데이트
+            });
+            cycleFlex.appendChild(cycleBaseSelect);
+            cycleDiv.appendChild(cycleFlex);
+            form.appendChild(cycleDiv);
+
+            // 수행 결과물
+            const deliverablesDiv = createElement('div');
+            deliverablesDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'deliverables' }, ['수행 결과물 (쉼표로 구분)']));
+            const deliverablesInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                type: 'text', id: 'deliverables', name: 'deliverables', value: task.deliverables.join(', ')
+            });
+            deliverablesInput.addEventListener('input', (e) => task.deliverables = e.target.value.split(',').map(item => item.trim()));
+            deliverablesDiv.appendChild(deliverablesInput);
+            form.appendChild(deliverablesDiv);
+
+            // 프로세스 단계
+            const processStepsDiv = createElement('div');
+            processStepsDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], {}, ['프로세스 단계']));
+            const processStepsContainer = createElement('div', [], { id: 'processStepsContainer' });
+            processStepsDiv.appendChild(processStepsContainer);
+            const addStepBtn = createElement('button', ['mt-2', 'px-4', 'py-2', 'bg-indigo-500', 'text-white', 'rounded-md', 'hover:bg-indigo-600', 'text-sm', 'transition-colors', 'duration-200'], { type: 'button' }, ['단계 추가']);
+            addStepBtn.addEventListener('click', () => {
+                task.processSteps.push('');
+                updateFormFields(); // 추가 후 단계 다시 렌더링
+            });
+            processStepsDiv.appendChild(addStepBtn);
+            form.appendChild(processStepsDiv);
+
+            // 실행 매뉴얼 파일 링크
+            const fileLinkDiv = createElement('div');
+            fileLinkDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'fileLink' }, ['실행 매뉴얼 파일 링크']));
+            const fileLinkInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                type: 'text', id: 'fileLink', name: 'fileLink', value: task.fileLink
+            });
+            fileLinkInput.addEventListener('input', (e) => task.fileLink = e.target.value);
+            fileLinkDiv.appendChild(fileLinkInput);
+            form.appendChild(fileLinkDiv);
+
+            // 파일 위치 정보
+            const fileLocationDiv = createElement('div');
+            fileLocationDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'fileLocation' }, ['파일 위치 정보']));
+            const fileLocationInput = createElement('input', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                type: 'text', id: 'fileLocation', name: 'fileLocation', value: task.fileLocation
+            });
+            fileLocationInput.addEventListener('input', (e) => task.fileLocation = e.target.value);
+            fileLocationDiv.appendChild(fileLocationInput);
+            form.appendChild(fileLocationDiv);
+
+            // 비고 사항
+            const notesDiv = createElement('div');
+            notesDiv.appendChild(createElement('label', ['block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1'], { for: 'notes' }, ['비고 사항']));
+            const notesTextarea = createElement('textarea', ['w-full', 'p-2', 'border', 'border-gray-300', 'rounded-md', 'focus:ring-pink-400', 'focus:border-pink-400', 'transition-all', 'duration-200'], {
+                id: 'notes', name: 'notes', rows: '3'
+            }, [task.notes]);
+            notesTextarea.addEventListener('input', (e) => task.notes = e.target.value);
+            notesDiv.appendChild(notesTextarea);
+            form.appendChild(notesDiv);
+
+            const buttonGroup = createElement('div', ['flex', 'justify-end', 'space-x-3', 'mt-6']);
+            const cancelBtn = createElement('button', ['px-5', 'py-2', 'bg-gray-200', 'text-gray-800', 'rounded-md', 'hover:bg-gray-300', 'transition-colors', 'duration-200'], { type: 'button' }, ['취소']);
+            cancelBtn.addEventListener('click', () => setState({ showTaskFormModal: false, taskToEdit: null }));
+            buttonGroup.appendChild(cancelBtn);
+            const saveBtn = createElement('button', ['px-5', 'py-2', 'bg-indigo-600', 'text-white', 'rounded-md', 'hover:bg-indigo-700', 'transition-colors', 'duration-200', 'shadow-md', 'hover:shadow-lg'], { type: 'submit' }, ['저장']);
+            buttonGroup.appendChild(saveBtn);
+            form.appendChild(buttonGroup);
+
+            modalContent.appendChild(form);
+            modalWrapper.appendChild(modalOverlay);
+            modalWrapper.appendChild(modalContent);
+
+            // 초기 폼 필드 렌더링 (특히 동적 필드)
+            updateFormFields();
+
+            return modalWrapper;
+        }
+
+        /**
+         * 업무 상세 페이지를 렌더링합니다.
+         * @param {object} task - 상세 정보를 표시할 업무 데이터
+         * @returns {HTMLElement} 업무 상세 페이지 요소
+         */
+        function renderTaskDetailPage(task) {
+            if (!task) {
+                const errorDiv = createElement('div', ['p-8', 'text-center', 'text-gray-500', 'animate-fade-in']);
+                errorDiv.appendChild(createElement('p', ['text-lg'], {}, ['업무 정보를 불러올 수 없습니다.']));
+                const backBtn = createElement('button', ['mt-4', 'px-6', 'py-2', 'bg-gray-200', 'text-gray-800', 'rounded-md', 'hover:bg-gray-300', 'transition-colors', 'duration-200'], { title: '목록으로 돌아가기' }, ['목록으로 돌아가기']);
+                backBtn.addEventListener('click', () => setState({ currentPage: 'all-tasks', selectedTask: null }));
+                errorDiv.appendChild(backBtn);
+                return errorDiv;
+            }
+
+            /**
+             * 수행 주기 텍스트와 아이콘을 포함하는 스팬 요소를 반환합니다.
+             * @param {string} cycle - 업무 수행 주기 문자열
+             * @returns {HTMLElement} 주기 표시 스팬 요소
+             */
+            const getCycleDisplay = (cycle) => {
+                const baseCycle = cycle.split(' ')[0];
+                let icon;
+                switch (baseCycle) {
+                    case '일일': icon = Icons.CalendarClock; break;
+                    case '주간': icon = Icons.CalendarDays; break;
+                    case '월간': icon = Icons.Calendar; break;
+                    case '년간': icon = Icons.CalendarCheck; break;
+                    case '발생시': icon = Icons.Clock; break;
+                    default: icon = '';
+                }
+                const span = createElement('span', ['inline-flex', 'items-center', 'px-2.5', 'py-0.5', 'rounded-full', 'text-xs', 'font-medium', 'bg-orange-100', 'text-orange-800']);
+                if (icon) span.appendChild(createIcon(icon, ['w-3', 'h-3', 'mr-1']));
+                span.appendChild(document.createTextNode(` ${cycle}`));
+                return span;
+            };
+
+            const detailDiv = createElement('div', ['p-6', 'bg-gray-50', 'min-h-screen', 'rounded-lg', 'animate-fade-in']);
+            const contentCard = createElement('div', ['bg-white', 'p-8', 'rounded-lg', 'shadow-md', 'border', 'border-gray-200', 'transition-all', 'duration-300', 'hover:shadow-lg']);
+
+            const headerFlex = createElement('div', ['flex', 'flex-col', 'sm:flex-row', 'justify-between', 'items-start', 'sm:items-center', 'mb-6', 'gap-4']);
+            headerFlex.appendChild(createElement('h2', ['text-3xl', 'font-bold', 'text-indigo-700'], {}, [task.name]));
+
+            const actionButtons = createElement('div', ['flex', 'space-x-3']);
+            const favBtn = createElement('button', ['p-2', 'rounded-full', 'text-gray-400', 'hover:text-yellow-500', 'transition-colors', 'duration-200', 'transform', 'hover:scale-110'], {
+                'aria-label': task.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가', title: task.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'
+            }, [createIcon(Icons.Star, (task.isFavorite ? ['w-7', 'h-7', 'fill-yellow-400', 'text-yellow-400'] : ['w-7', 'h-7', 'text-gray-300']))]);
+            favBtn.addEventListener('click', () => {
+                const updatedTasks = state.tasks.map(t => t.id === task.id ? { ...t, isFavorite: !t.isFavorite } : t);
+                setState({ tasks: updatedTasks, selectedTask: { ...task, isFavorite: !task.isFavorite } }); // 선택된 업무도 업데이트
+            });
+            actionButtons.appendChild(favBtn);
+
+            const editBtn = createElement('button', ['p-2', 'rounded-full', 'text-gray-400', 'hover:text-indigo-500', 'transition-colors', 'duration-200', 'transform', 'hover:scale-110'], {
+                'aria-label': '업무 수정', title: '수정'
+            }, [createIcon(Icons.Edit, ['w-7', 'h-7'])]);
+            editBtn.addEventListener('click', () => setState({ showTaskFormModal: true, taskToEdit: task }));
+            actionButtons.appendChild(editBtn);
+
+            const printBtn = createElement('button', ['p-2', 'rounded-full', 'text-gray-400', 'hover:text-indigo-500', 'transition-colors', 'duration-200', 'transform', 'hover:scale-110'], {
+                'aria-label': '인쇄 모드', title: '인쇄'
+            }, [createIcon(Icons.Printer, ['w-7', 'h-7'])]);
+            printBtn.addEventListener('click', () => setState({ currentPage: 'print', selectedTask: task }));
+            actionButtons.appendChild(printBtn);
+
+            const backBtn = createElement('button', ['px-4', 'py-2', 'bg-gray-200', 'text-gray-800', 'rounded-md', 'hover:bg-gray-300', 'transition-colors', 'duration-200', 'text-sm', 'font-medium'], { title: '목록으로 돌아가기' }, ['목록']);
+            backBtn.addEventListener('click', () => setState({ currentPage: 'all-tasks', selectedTask: null }));
+            actionButtons.appendChild(backBtn);
+
+            headerFlex.appendChild(actionButtons);
+            contentCard.appendChild(headerFlex);
+
+            const infoGrid = createElement('div', ['grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-x-8', 'gap-y-4', 'mb-8', 'text-gray-700']);
+
+            const assigneeInfo = createElement('div', ['flex', 'items-center']);
+            assigneeInfo.appendChild(createIcon(Icons.User, ['w-5', 'h-5', 'mr-3', 'text-indigo-500']));
+            assigneeInfo.appendChild(createElement('span', ['font-semibold'], {}, ['담당자:']));
+            assigneeInfo.appendChild(createElement('span', ['ml-2'], {}, [task.assignee]));
+            infoGrid.appendChild(assigneeInfo);
+
+            const categoryInfo = createElement('div', ['flex', 'items-center']);
+            categoryInfo.appendChild(createIcon(Icons.LayoutDashboard, ['w-5', 'h-5', 'mr-3', 'text-indigo-500']));
+            categoryInfo.appendChild(createElement('span', ['font-semibold'], {}, ['업무 카테고리:']));
+            categoryInfo.appendChild(createElement('span', ['ml-2'], {}, [task.category]));
+            infoGrid.appendChild(categoryInfo);
+
+            const cycleInfo = createElement('div', ['flex', 'items-center']);
+            cycleInfo.appendChild(createIcon(Icons.CalendarDays, ['w-5', 'h-5', 'mr-3', 'text-indigo-500']));
+            cycleInfo.appendChild(createElement('span', ['font-semibold'], {}, ['수행 주기:']));
+            cycleInfo.appendChild(createElement('span', ['ml-2'], {}, [getCycleDisplay(task.cycle)]));
+            infoGrid.appendChild(cycleInfo);
+
+            const deliverablesInfo = createElement('div', ['flex', 'items-center']);
+            deliverablesInfo.appendChild(createIcon(Icons.FileText, ['w-5', 'h-5', 'mr-3', 'text-indigo-500']));
+            deliverablesInfo.appendChild(createElement('span', ['font-semibold'], {}, ['수행 결과물:']));
+            deliverablesInfo.appendChild(createElement('span', ['ml-2'], {}, [task.deliverables.join(', ')]));
+            infoGrid.appendChild(deliverablesInfo);
+
+            contentCard.appendChild(infoGrid);
+
+            const processStepsSection = createElement('div', ['mb-8']);
+            processStepsSection.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800', 'mb-3', 'flex', 'items-center'], {}, [createIcon(Icons.ListFilter, ['w-5', 'h-5', 'mr-2', 'text-indigo-600']), ' 프로세스 단계']));
+            const ol = createElement('ol', ['list-decimal', 'list-inside', 'space-y-2', 'text-gray-700']);
+            task.processSteps.forEach((step, index) => {
+                const li = createElement('li', ['bg-gray-50', 'p-3', 'rounded-md', 'border', 'border-gray-100', 'shadow-sm', 'animate-fade-in-up']);
+                li.style.animationDelay = `${index * 0.05}s`; // 단계별 애니메이션 지연
+                li.appendChild(createElement('span', ['font-medium', 'text-indigo-700', 'mr-2'], {}, [`${index + 1}.`]));
+                li.appendChild(document.createTextNode(` ${step}`));
+                ol.appendChild(li);
+            });
+            processStepsSection.appendChild(ol);
+            contentCard.appendChild(processStepsSection);
+
+            const fileInfoGrid = createElement('div', ['grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-x-8', 'gap-y-4', 'mb-8', 'text-gray-700']);
+            const fileInfoDiv = createElement('div');
+            fileInfoDiv.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800', 'mb-3', 'flex', 'items-center'], {}, [createIcon(Icons.HardDrive, ['w-5', 'h-5', 'mr-2', 'text-indigo-600']), ' 파일 정보']));
+            const fileLinkP = createElement('p', ['mb-2']);
+            fileLinkP.appendChild(createElement('span', ['font-semibold'], {}, ['실행 매뉴얼 파일 링크:']));
+            const fileLinkAnchor = createElement('a', ['text-indigo-600', 'hover:underline', 'transition-colors', 'duration-200'], { href: task.fileLink, target: '_blank', rel: 'noopener noreferrer', title: '실행 매뉴얼 다운로드' }, [' 다운로드 ']);
+            fileLinkAnchor.appendChild(createIcon(Icons.ChevronRight, ['inline-block', 'w-4', 'h-4', 'ml-1']));
+            fileLinkP.appendChild(fileLinkAnchor);
+            fileInfoDiv.appendChild(fileLinkP);
+            fileInfoDiv.appendChild(createElement('p', [], {}, [createElement('span', ['font-semibold'], {}, ['파일 위치 정보:']), createElement('span', ['ml-2'], {}, [task.fileLocation])]));
+            fileInfoGrid.appendChild(fileInfoDiv);
+
+            const notesDiv = createElement('div');
+            notesDiv.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800', 'mb-3', 'flex', 'items-center'], {}, [createIcon(Icons.Info, ['w-5', 'h-5', 'mr-2', 'text-indigo-600']), ' 비고 사항']));
+            notesDiv.appendChild(createElement('p', ['bg-indigo-50', 'p-3', 'rounded-md', 'border', 'border-indigo-100', 'text-indigo-800', 'italic'], {}, [task.notes || '특이 사항 없음']));
+            fileInfoGrid.appendChild(notesDiv);
+            contentCard.appendChild(fileInfoGrid);
+
+            detailDiv.appendChild(contentCard);
+            return detailDiv;
+        }
+
+        /**
+         * 인쇄 페이지를 렌더링합니다.
+         * 인쇄에 최적화된 업무 상세 정보를 표시합니다.
+         * @param {object} task - 인쇄할 업무 데이터
+         * @returns {HTMLElement} 인쇄 페이지 요소
+         */
+        function renderPrintPage(task) {
+            if (!task) {
+                const errorDiv = createElement('div', ['p-8', 'text-center', 'text-gray-500']);
+                errorDiv.appendChild(createElement('p', ['text-lg'], {}, ['인쇄할 업무 정보를 불러올 수 없습니다.']));
+                const backBtn = createElement('button', ['mt-4', 'px-6', 'py-2', 'bg-gray-200', 'text-gray-800', 'rounded-md', 'hover:bg-gray-300', 'transition-colors', 'duration-200'], { title: '목록으로 돌아가기' }, ['목록으로 돌아가기']);
+                backBtn.addEventListener('click', () => setState({ currentPage: 'detail', selectedTask: state.selectedTask }));
+                errorDiv.appendChild(backBtn);
+                return errorDiv;
+            }
+
+            const getCycleDisplay = (cycle) => {
+                return createElement('span', ['inline-flex', 'items-center', 'text-xs', 'font-medium'], {}, [cycle]);
+            };
+
+            const printDiv = createElement('div', ['p-8', 'bg-white', 'print-page']);
+            printDiv.appendChild(createElement('h1', ['text-3xl', 'font-bold', 'text-indigo-700', 'mb-6', 'text-center'], {}, [task.name]));
+
+            const infoGrid = createElement('div', ['grid', 'grid-cols-1', 'sm:grid-cols-2', 'gap-x-8', 'gap-y-4', 'mb-8', 'text-gray-800', 'text-sm']);
+
+            infoGrid.appendChild(createElement('div', ['flex', 'items-center'], {}, [createElement('span', ['font-semibold'], {}, ['담당자:']), createElement('span', ['ml-2'], {}, [task.assignee])]));
+            infoGrid.appendChild(createElement('div', ['flex', 'items-center'], {}, [createElement('span', ['font-semibold'], {}, ['업무 카테고리:']), createElement('span', ['ml-2'], {}, [task.category])]));
+            infoGrid.appendChild(createElement('div', ['flex', 'items-center'], {}, [createElement('span', ['font-semibold'], {}, ['수행 주기:']), createElement('span', ['ml-2'], {}, [getCycleDisplay(task.cycle)])]));
+            infoGrid.appendChild(createElement('div', ['flex', 'items-center'], {}, [createElement('span', ['font-semibold'], {}, ['수행 결과물:']), createElement('span', ['ml-2'], {}, [task.deliverables.join(', ')])]));
+            printDiv.appendChild(infoGrid);
+
+            const processStepsSection = createElement('div', ['mb-8']);
+            processStepsSection.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800', 'mb-3'], {}, ['프로세스 단계']));
+            const ol = createElement('ol', ['list-decimal', 'list-inside', 'space-y-2', 'text-gray-700', 'text-sm']);
+            task.processSteps.forEach((step, index) => {
+                ol.appendChild(createElement('li', ['p-2', 'border-b', 'border-gray-100'], {}, [createElement('span', ['font-medium', 'text-indigo-700', 'mr-2'], {}, [`${index + 1}.`]), ` ${step}`]));
+            });
+            processStepsSection.appendChild(ol);
+            printDiv.appendChild(processStepsSection);
+
+            const fileInfoGrid = createElement('div', ['grid', 'grid-cols-1', 'sm:grid-cols-2', 'gap-x-8', 'gap-y-4', 'mb-8', 'text-gray-700']);
+            const fileInfoDiv = createElement('div');
+            fileInfoDiv.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800', 'mb-3'], {}, ['파일 정보']));
+            const fileLinkP = createElement('p', ['mb-2']);
+            fileLinkP.appendChild(createElement('span', ['font-semibold'], {}, ['실행 매뉴얼 파일 링크:']));
+            fileLinkP.appendChild(createElement('a', ['text-indigo-600', 'hover:underline'], { href: task.fileLink, target: '_blank', rel: 'noopener noreferrer' }, [' 다운로드']));
+            fileInfoDiv.appendChild(fileLinkP);
+            fileInfoDiv.appendChild(createElement('p', [], {}, [createElement('span', ['font-semibold'], {}, ['파일 위치 정보:']), createElement('span', ['ml-2'], {}, [task.fileLocation])]));
+            fileInfoGrid.appendChild(fileInfoDiv);
+
+            const notesDiv = createElement('div');
+            notesDiv.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800', 'mb-3'], {}, ['비고 사항']));
+            notesDiv.appendChild(createElement('p', ['italic'], {}, [task.notes || '특이 사항 없음']));
+            fileInfoGrid.appendChild(notesDiv);
+            printDiv.appendChild(fileInfoGrid);
+
+            const printControlDiv = createElement('div', ['text-center', 'mt-10', 'no-print']); // 인쇄 시 숨김
+            const backFromPrintBtn = createElement('button', ['px-6', 'py-2', 'bg-indigo-500', 'text-white', 'rounded-md', 'hover:bg-indigo-600', 'transition-colors', 'duration-200'], { title: '인쇄 모드 종료' }, ['인쇄 모드 종료']);
+            backFromPrintBtn.addEventListener('click', () => setState({ currentPage: 'detail', selectedTask: state.selectedTask }));
+            printControlDiv.appendChild(backFromPrintBtn);
+            printDiv.appendChild(printControlDiv);
+
+            // 렌더링 후 인쇄 대화 상자 트리거
+            setTimeout(() => window.print(), 500);
+
+            return printDiv;
+        }
+
+        /**
+         * 사용자 정의 확인 모달 컴포넌트입니다.
+         * @returns {HTMLElement} 확인 모달 요소
+         */
+        function createConfirmationModal() {
+            const modalWrapper = createElement('div', ['fixed', 'inset-0', 'flex', 'items-center', 'justify-center', 'z-50', 'p-4']);
+            const modalOverlay = createElement('div', ['absolute', 'inset-0', 'bg-gray-600', 'bg-opacity-50', 'animate-fade-in']);
+            const modalContent = createElement('div', ['bg-white', 'rounded-lg', 'shadow-xl', 'max-w-sm', 'w-full', 'mx-auto', 'p-6', 'text-center', 'transform', 'scale-95', 'animate-scale-in']);
+            modalWrapper.id = 'confirmation-modal';
+
+            modalContent.appendChild(createElement('h3', ['text-xl', 'font-semibold', 'text-gray-800', 'mb-4'], {}, ['확인']));
+            modalContent.appendChild(createElement('p', ['text-gray-700', 'mb-6'], {}, [state.confirmationModalMessage]));
+
+            const buttonGroup = createElement('div', ['flex', 'justify-center', 'space-x-4']);
+            const cancelBtn = createElement('button', ['px-5', 'py-2', 'bg-gray-200', 'text-gray-800', 'rounded-md', 'hover:bg-gray-300', 'transition-colors', 'duration-200'], { type: 'button' }, ['취소']);
+            cancelBtn.addEventListener('click', () => setState({ showConfirmationModal: false, confirmationModalCallback: null }));
+            buttonGroup.appendChild(cancelBtn);
+
+            const confirmBtn = createElement('button', ['px-5', 'py-2', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'transition-colors', 'duration-200', 'shadow-md', 'hover:shadow-lg'], { type: 'button' }, ['확인']);
+            confirmBtn.addEventListener('click', () => {
+                if (state.confirmationModalCallback) {
+                    state.confirmationModalCallback();
+                }
+                setState({ showConfirmationModal: false, confirmationModalCallback: null });
+            });
+            buttonGroup.appendChild(confirmBtn);
+
+            modalContent.appendChild(buttonGroup);
+            modalWrapper.appendChild(modalOverlay);
+            modalWrapper.appendChild(modalContent);
+
+            return modalWrapper;
+        }
+
+
+        /**
+         * 메인 애플리케이션 렌더링 함수.
+         * 현재 상태에 따라 적절한 페이지와 모달을 렌더링합니다.
+         */
+        function renderApp() {
+            const appContainer = document.getElementById('app');
+            appContainer.innerHTML = ''; // 기존 내용 지우기
+
+            const header = renderHeader();
+            appContainer.appendChild(header);
+
+            const mainFlexContainer = createElement('div', ['flex', 'flex-1', 'flex-col', 'sm:flex-row', 'p-4', 'gap-4']);
+            const sidebar = renderSidebar();
+            if (sidebar) {
+                mainFlexContainer.appendChild(sidebar);
+            }
+
+            const mainContentArea = createElement('main', ['flex-1', 'overflow-auto']);
+
+            // '전체 업무' 페이지일 때만 필터 칩 렌더링
+            if (state.currentPage === 'all-tasks') {
+                const filterChips = renderFilterChips();
+                if (filterChips) {
+                    mainContentArea.appendChild(filterChips);
+                }
+            }
+
+            // 현재 페이지에 따라 메인 콘텐츠 렌더링
+            switch (state.currentPage) {
+                case 'dashboard':
+                    mainContentArea.appendChild(renderDashboardPage());
+                    break;
+                case 'all-tasks':
+                    mainContentArea.appendChild(renderTaskList());
+                    break;
+                case 'detail':
+                    mainContentArea.appendChild(renderTaskDetailPage(state.selectedTask));
+                    break;
+                case 'print':
+                    mainContentArea.appendChild(renderPrintPage(state.selectedTask));
+                    break;
+            }
+            mainFlexContainer.appendChild(mainContentArea);
+            appContainer.appendChild(mainFlexContainer);
+
+            // 모달 조건부 렌더링 (id별로 관리)
+            // 업무 폼 모달
+            if (state.showTaskFormModal) {
+                if (!document.getElementById('modal-task-form')) {
+                    document.body.appendChild(createTaskFormModal(state.taskToEdit));
+                }
+            } else {
+                const modal = document.getElementById('modal-task-form');
+                if (modal) modal.remove();
+            }
+
+            // 팀 개요 수정 모달
+            if (state.showEditTeamOverviewModal) {
+                if (!document.getElementById('modal-edit-team-overview')) {
+                    document.body.appendChild(createEditTeamOverviewModal(state.teamOverview));
+                }
+            } else {
+                const modal = document.getElementById('modal-edit-team-overview');
+                if (modal) modal.remove();
+            }
+
+            // 공지사항 폼 모달
+            if (state.showAnnouncementFormModal) {
+                if (!document.getElementById('modal-announcement-form')) {
+                    document.body.appendChild(createAnnouncementFormModal(state.announcementToEdit));
+                }
+            } else {
+                const modal = document.getElementById('modal-announcement-form');
+                if (modal) modal.remove();
+            }
+
+            // 빠른 링크 폼 모달
+            if (state.showQuickLinkFormModal) {
+                if (!document.getElementById('modal-quicklink-form')) {
+                    document.body.appendChild(createQuickLinkFormModal(state.quickLinkToEdit));
+                }
+            } else {
+                const modal = document.getElementById('modal-quicklink-form');
+                if (modal) modal.remove();
+            }
+
+            // 확인 모달 (confirm() 대체)
+            if (state.showConfirmationModal) {
+                if (!document.getElementById('confirmation-modal')) {
+                    document.body.appendChild(createConfirmationModal());
+                }
+            } else {
+                const modal = document.getElementById('confirmation-modal');
+                if (modal) modal.remove();
+            }
+        }
+
+        // 초기 로딩 효과 (데이터 가져오는 것을 시뮬레이션)
+        document.addEventListener('DOMContentLoaded', async () => {
+            setState({ isLoading: false }); // 그냥 로딩 없이 바로 화면 보여주기
+        });
+
+        // 상태 변경 이벤트를 수신하고 앱을 다시 렌더링
+        eventBus.addEventListener('stateChange', (e) => {
+            // setState 함수 내에서 renderApp이 직접 호출되므로, 여기서는 추가적인 렌더링 로직이 필요 없음.
+            // 더 세분화된 업데이트를 위해서는 e.detail을 확인하여 DOM의 특정 부분을 업데이트할 수 있습니다.
+        });
+
+        // 초기 앱 렌더링
+        renderApp();
+
+        // Firebase 연동 함수들 (읽기/쓰기/수정/삭제)
+        async function fetchTasksFromDB() {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const snapshot = await db.ref('tasks').once('value');
+                const val = snapshot.val();
+                if (!val) return [];
+                return Object.entries(val).map(([id, data]) => ({ id, ...data }));
+            } else {
+                // Firebase가 없으면 목업 데이터 반환
+                return JSON.parse(JSON.stringify(mockTasks));
+            }
+        }
+
+        async function addTaskToDB(task) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                const ref = db.ref('tasks').push();
+                const newTask = { ...task, id: ref.key };
+                await ref.set(newTask);
+                return newTask;
+            }
+            console.warn('Firebase가 연결되어 있지 않습니다.');
+            return null;
+        }
+
+        async function updateTaskInDB(task) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                await db.ref('tasks/' + task.id).set(task);
+                return true;
+            }
+            return false;
+        }
+
+        async function deleteTaskFromDB(taskId) {
+            if (window.firebase && window.firebase.database) {
+                const db = firebase.database();
+                await db.ref('tasks/' + taskId).remove();
+                return true;
+            }
+            return false;
+        }
+
+        // 초기 로딩 효과 (Firebase 초기화 및 데이터 가져오기)
+        document.addEventListener('DOMContentLoaded', async () => {
+            setState({ isLoading: true }, false); // 로딩 중 표시
+            // Firebase 초기화
+            if (window.firebase && !(window.firebase.apps && window.firebase.apps.length)) {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBdDXOEreJzytGMr8anZ9mg7I_kYrnx7gk",
+                    authDomain: "my-process-app.firebaseapp.com",
+                    databaseURL: "https://my-process-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "my-process-app",
+                    storageBucket: "my-process-app.appspot.com",
+                    messagingSenderId: "1044912986098",
+                    appId: "1:1044912986098:web:8f3d4d14cd7a2564fefd6b"
+                };
+                firebase.initializeApp(firebaseConfig);
+            }
+            const tasks = await fetchTasksFromDB();
+            setState({ tasks, isLoading: false });
+        });
+
+        // setState를 수정하여 쓰기/수정/삭제 시 Firebase에도 반영
+        async function setStateWithDB(newState, reRender = true) {
+            // 쓰기/수정/삭제 요청이 있는지 확인
+            if (newState.addTask) {
+                try {
+                    const newTask = await addTaskToDB(newState.addTask);
+                    if (newTask) {
+                        state.tasks = [...state.tasks, newTask]; // 새 배열로 갱신
+                    }
+                } catch (e) {
+                    console.error('Firebase addTask 에러:', e);
+                    alert('Firebase에 업무를 추가할 수 없습니다. Database Rules(권한) 또는 네트워크를 확인하세요.');
+                }
+                delete newState.addTask;
+            }
+            if (newState.updateTask) {
+                try {
+                    await updateTaskInDB(newState.updateTask);
+                    state.tasks = state.tasks.map(t => t.id === newState.updateTask.id ? newState.updateTask : t);
+                } catch (e) {
+                    console.error('Firebase updateTask 에러:', e);
+                    alert('Firebase에 업무를 수정할 수 없습니다. Database Rules(권한) 또는 네트워크를 확인하세요.');
+                }
+                delete newState.updateTask;
+            }
+            if (newState.deleteTaskId) {
+                try {
+                    await deleteTaskFromDB(newState.deleteTaskId);
+                    state.tasks = state.tasks.filter(t => t.id !== newState.deleteTaskId);
+                } catch (e) {
+                    console.error('Firebase deleteTask 에러:', e);
+                    alert('Firebase에서 업무를 삭제할 수 없습니다. Database Rules(권한) 또는 네트워크를 확인하세요.');
+                }
+                delete newState.deleteTaskId;
+            }
+            Object.assign(state, newState);
+            eventBus.dispatchEvent(new CustomEvent('stateChange', { detail: state }));
+            if (reRender) {
+                renderApp();
+            }
+        }
+
+        // 기존 setState를 setStateWithDB로 교체 (아래 예시, 실제로는 주요 폼/삭제/수정 이벤트에서 setState 대신 setStateWithDB 사용)
+        // 예시: 업무 추가/수정/삭제 모달에서 setState 대신 setStateWithDB 사용
+        // ... existing code ...
+    </script>
 </body>
 </html>
